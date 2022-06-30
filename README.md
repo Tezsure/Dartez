@@ -39,3 +39,7 @@ There are many ways to contribute, from writing tutorials or blog posts, improvi
 
 Please file feature requests and bugs at the [issue tracker](https://github.com/Tezsure/Dartez/issues/new). If you want to contribute to this libary, please submit a Pull Request.<br>
 You can get in touch with us for any open discussion and support via [Telegram](https://t.me/tezster).
+
+## TODO
+- [ ] Making michelin and michelson encoder more stable
+- [ ] Gas fee calculator
