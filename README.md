@@ -21,17 +21,14 @@ Check out the [example](https://github.com/Tezsure/Dartez/tree/main/example) dir
 For usage guidance follow our **[documentation page](https://docs.dartez.io/)**.
 <br>
 
----
-**NOTE:**
-Use stable version of flutter to avoid package conflicts.
 
----
-
+*NOTE:
+Use stable version of flutter to avoid package conflicts.*
 
 
 ## Contributing
 
-dartez is open source and we love to receive contributions from whosoever passionate with the technology.
+Dartez is open source and we love to receive contributions from whosoever passionate with the technology.
 
 There are many ways to contribute, from writing tutorials or blog posts, improving the documentation, bug reports and feature requests or writing code. We certainly welcome pull requests as well.
 
@@ -40,6 +37,6 @@ There are many ways to contribute, from writing tutorials or blog posts, improvi
 Please file feature requests and bugs at the [issue tracker](https://github.com/Tezsure/Dartez/issues/new). If you want to contribute to this libary, please submit a Pull Request.<br>
 You can get in touch with us for any open discussion and support via [Telegram](https://t.me/tezster).
 
-## TODO
-- [ ] Making michelin and michelson encoder more stable
-- [ ] Gas fee calculator
+## Extra
+
+We’re building a lot of exciting features which will be released soon, So stay tuned with our updates and releases!
