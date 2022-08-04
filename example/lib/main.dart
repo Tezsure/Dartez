@@ -60,7 +60,7 @@ class _MyAppState extends State<MyApp> {
       publicKey: 'edpktt.....U1gYJu2',
     );
 
-    var signer = await Dartez.createSigner(
+    SoftSigner signer = await Dartez.createSigner(
         Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
 
     var result = await Dartez.sendKeyRevealOperation(server, signer, keyStore);
