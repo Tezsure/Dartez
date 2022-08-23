@@ -11,9 +11,9 @@ class Nearley {
 
   var lexer;
   var lexerState;
-  late var table;
+  late List<Column?> table;
 
-  int? current;
+  int current = 0;
   late var results;
 
   static NearleyGrammar fromCompiled(Map<String, dynamic> rules, {start}) {
@@ -57,9 +57,9 @@ class Nearley {
     while (token != null) {
       column = table[current];
 
-      if (current != 0) table[current! - 1] = null;
+      if (current != 0) table[current - 1] = null;
 
-      var n = current! + 1;
+      var n = current + 1;
       var nextColumn = new Column(grammar, n);
 
       var literal = token['text'] != null ? token['text'] : token['value'];
@@ -95,7 +95,7 @@ class Nearley {
       }
 
       token = lexer.next();
-      current = current! + 1;
+      current = current + 1;
     }
 
     if (column != null) {
@@ -111,11 +111,11 @@ class Nearley {
     var considerations = [];
     var start = this.grammar!.start;
     var column = this.table[this.table.length - 1];
-    column.states.forEach((t) {
-      if (t.rule.name == start &&
-          t.dot == t.rule.symbols.length &&
-          t.reference == 0 &&
-          t.data != fail) {
+    column?.states.forEach((t) {
+      if (t?.rule.name == start &&
+          t?.dot == t?.rule.symbols.length &&
+          t?.reference == 0 &&
+          t?.data != fail) {
         considerations.add(t);
       }
     });
@@ -135,21 +135,21 @@ class Nearley {
         '. Instead, I was expecting to see one of the following:\n');
     var lastColumnIndex = this.table.length - 2;
     var lastColumn = this.table[lastColumnIndex];
-    var expectantStates = lastColumn.states.where((state) {
-      if (state.rule.symbols.isNotEmpty) {
+    var expectantStates = lastColumn?.states.where((state) {
+      if (state?.rule.symbols.isNotEmpty) {
         var nextSymbol =
-            state.rule.symbols[state.dot - 1 < 0 ? 0 : state.dot - 1];
+            state?.rule.symbols[state.dot - 1 < 0 ? 0 : state.dot - 1];
         return nextSymbol != null && !(nextSymbol is String);
       } else {
         return false;
       }
     }).toList();
 
-    var stateStacks = expectantStates.map((state) {
+    var stateStacks = expectantStates?.map((state) {
       return this.buildFirstStateStack(state, []);
     }).toList();
 
-    stateStacks.forEach((stateStack) {
+    stateStacks?.forEach((stateStack) {
       var state = stateStack[0];
       var nextSymbol =
           state.rule.symbols[state.dot - 1 < 0 ? 0 : state.dot - 1];
@@ -181,26 +181,26 @@ class Nearley {
     lines.add(lexerMessage);
     var lastColumnIndex = this.table.length - 1;
     var lastColumn = this.table[lastColumnIndex];
-    var expectantStates = lastColumn.states.where((state) {
-      var nextSymbol = state.rule.symbols[state.dot] ?? null;
+    var expectantStates = lastColumn?.states.where((state) {
+      var nextSymbol = state?.rule.symbols[state.dot] ?? null;
       return nextSymbol != null && !(nextSymbol is String);
     }).toList();
 
-    if (expectantStates.length == 0) {
+    if (expectantStates?.length == 0) {
       lines.add('Unexpected ' +
           tokenDisplay +
           '. I did not expect any more input. Here is the state of my parse table:\n');
-      this.displayStateStack(lastColumn.states, lines);
+      this.displayStateStack(lastColumn?.states, lines);
     } else {
       lines.add('Unexpected ' +
           tokenDisplay +
           '. Instead, I was expecting to see one of the following:\n');
 
-      var stateStacks = expectantStates.map((state) {
+      var stateStacks = expectantStates?.map((state) {
         return this.buildFirstStateStack(state, []) ?? [state];
       });
 
-      stateStacks.forEach((stateStack) {
+      stateStacks?.forEach((stateStack) {
         var state = stateStack[0];
         var nextSymbol = state.rule.symbols[state.dot];
         var symbolDisplay = this.getSymbolDisplay(nextSymbol);
