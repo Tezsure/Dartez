@@ -18,7 +18,7 @@ class TezosNodeWriter {
   static Future<Map<String, Object?>> sendTransactionOperation(String server,
       SoftSigner signer, KeyStoreModel keyStore, String to, int amount, int fee,
       {int offset = 54, required bool isKeyRevealed}) async {
-    var results = await Future.wait(!isKeyRevealed
+    final results = await Future.wait(!isKeyRevealed
         ? [
             TezosNodeReader.getCounterForAccount(
                 server, keyStore.publicKeyHash),
@@ -49,7 +49,7 @@ class TezosNodeWriter {
       storageLimit: estimate.storageLimit,
     );
 
-    var operations = await appendRevealOperation(
+    final operations = await appendRevealOperation(
       server,
       keyStore.publicKey,
       keyStore.publicKeyHash,
@@ -60,8 +60,13 @@ class TezosNodeWriter {
     return sendOperation(server, operations, signer, offset, blockHead);
   }
 
-  static sendDelegationOperation(String server, SoftSigner signer,
-      KeyStoreModel keyStore, String delegate, int fee, offset) async {
+  static Future<Map<String, Object?>> sendDelegationOperation(
+      String server,
+      SoftSigner signer,
+      KeyStoreModel keyStore,
+      String delegate,
+      int fee,
+      offset) async {
     var counter = await TezosNodeReader.getCounterForAccount(
             server, keyStore.publicKeyHash) +
         1;
@@ -79,12 +84,12 @@ class TezosNodeWriter {
       storageLimit: estimate.storageLimit,
     );
 
-    var operations = await appendRevealOperation(server, keyStore.publicKey,
-        keyStore.publicKeyHash, counter - 1, [delegation]);
+    final List<OperationModel> operations = await appendRevealOperation(server,
+        keyStore.publicKey, keyStore.publicKeyHash, counter - 1, [delegation]);
     return sendOperation(server, operations, signer, offset);
   }
 
-  static sendContractOriginationOperation(
+  static Future<Map<String, Object?>> sendContractOriginationOperation(
       String server,
       SoftSigner signer,
       KeyStoreModel keyStore,
@@ -111,8 +116,8 @@ class TezosNodeWriter {
         storage,
         codeFormat,
         counter);
-    var operations = await appendRevealOperation(server, keyStore.publicKey,
-        keyStore.publicKeyHash, counter - 1, [operation]);
+    final List<OperationModel> operations = await appendRevealOperation(server,
+        keyStore.publicKey, keyStore.publicKeyHash, counter - 1, [operation]);
     return sendOperation(server, operations, signer, offset);
   }
 
@@ -131,11 +136,11 @@ class TezosNodeWriter {
     offset = 54,
     bool? preapply,
   }) async {
-    var counter = await TezosNodeReader.getCounterForAccount(
+    final counter = await TezosNodeReader.getCounterForAccount(
             server, keyStore.publicKeyHash) +
         1;
 
-    var transactions = [];
+    List<OperationModel> transactions = [];
 
     for (var i = 0; i < entrypoint.length; i++) {
       transactions.add(
@@ -153,12 +158,13 @@ class TezosNodeWriter {
         ),
       );
     }
-    var operations = await appendRevealOperation(
-        server,
-        keyStore.publicKey,
-        keyStore.publicKeyHash,
-        counter - 1,
-        [...transactions as Iterable<OperationModel>]);
+    final List<OperationModel> operations = await appendRevealOperation(
+      server,
+      keyStore.publicKey,
+      keyStore.publicKeyHash,
+      counter - 1,
+      transactions,
+    );
     return sendOperation(server, operations, signer, offset, null, preapply);
   }
 
@@ -172,14 +178,14 @@ class TezosNodeWriter {
     return await sendOperation(server, [activation], signer, 54);
   }
 
-  static sendKeyRevealOperation(
+  static Future<Map<String, Object?>> sendKeyRevealOperation(
       String server, signer, KeyStoreModel keyStore, fee, offset) async {
-    var counter = (await TezosNodeReader.getCounterForAccount(
+    final counter = (await TezosNodeReader.getCounterForAccount(
             server, keyStore.publicKeyHash)) +
         1;
-    var estimate = Estimate(10000 * 1000, 0, 162, 250, fee);
+    final estimate = Estimate(10000 * 1000, 0, 162, 250, fee);
 
-    var revealOp = OperationModel(
+    final revealOp = OperationModel(
       kind: 'reveal',
       source: keyStore.publicKeyHash,
       fee: estimate.suggestedFeeMutez.toString(),
@@ -189,11 +195,11 @@ class TezosNodeWriter {
       publicKey: keyStore.publicKey,
     );
 
-    var operations = [revealOp];
+    final List<OperationModel> operations = [revealOp];
     return sendOperation(server, operations, signer, offset);
   }
 
-  static constructContractInvocationOperation(
+  static OperationModel constructContractInvocationOperation(
       String publicKeyHash,
       int counter,
       String contract,
@@ -204,7 +210,7 @@ class TezosNodeWriter {
       entrypoint,
       String parameters,
       TezosParameterFormat parameterFormat) {
-    var estimate = Estimate(gasLimit * 1500, storageLimit, 162, 250, fee);
+    final estimate = Estimate(gasLimit * 1500, storageLimit, 162, 250, fee);
 
     OperationModel transaction = new OperationModel(
       destination: contract,
@@ -277,21 +283,21 @@ class TezosNodeWriter {
   static Future<Map<String, Object?>> sendOperation(String server,
       List<OperationModel> operations, SoftSigner signer, int offset,
       [blockHead, preapply]) async {
-    var _blockHead =
+    final _blockHead =
         blockHead ?? await TezosNodeReader.getBlockAtOffset(server, offset);
-    var blockHash = _blockHead['hash'].toString().substring(0, 51);
-    var forgedOperationGroup = forgeOperations(blockHash, operations);
-    var opSignature = signer.signOperation(Uint8List.fromList(hex.decode(
+    final blockHash = _blockHead['hash'].toString().substring(0, 51);
+    final forgedOperationGroup = forgeOperations(blockHash, operations);
+    final opSignature = signer.signOperation(Uint8List.fromList(hex.decode(
         TezosConstants.OperationGroupWatermark + forgedOperationGroup)));
-    var signedOpGroup = Uint8List.fromList(
+    final signedOpGroup = Uint8List.fromList(
         hex.decode(forgedOperationGroup) + opSignature.toList());
-    var base58signature = TezosMessageUtils.readSignatureWithHint(
+    final base58signature = TezosMessageUtils.readSignatureWithHint(
         opSignature, signer.getSignerCurve());
-    var opPair = {'bytes': signedOpGroup, 'signature': base58signature};
-    var appliedOp = await preapplyOperation(
+    final opPair = {'bytes': signedOpGroup, 'signature': base58signature};
+    final appliedOp = await preapplyOperation(
         server, blockHash, _blockHead['protocol'], operations, opPair);
     if (preapply != null && preapply) return opPair;
-    var injectedOperation = await injectOperation(server, opPair);
+    final injectedOperation = await injectOperation(server, opPair);
 
     return {'appliedOp': appliedOp[0], 'operationGroupID': injectedOperation};
   }
@@ -305,10 +311,10 @@ class TezosNodeWriter {
     return encoded;
   }
 
-  static preapplyOperation(String server, String branch, protocol,
+  static dynamic preapplyOperation(String server, String branch, protocol,
       List<OperationModel> operations, Map<String, Object> signedOpGroup,
       {String chainid = 'main'}) async {
-    var payload = [
+    final payload = [
       {
         'protocol': protocol,
         'branch': branch,
@@ -316,7 +322,7 @@ class TezosNodeWriter {
         'signature': signedOpGroup['signature']
       }
     ];
-    var response = await HttpHelper.performPostRequest(server,
+    final response = await HttpHelper.performPostRequest(server,
         'chains/$chainid/blocks/head/helpers/preapply/operations', payload);
     var json;
     try {
