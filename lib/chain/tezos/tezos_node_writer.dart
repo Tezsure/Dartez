@@ -125,7 +125,7 @@ class TezosNodeWriter {
             server, keyStore.publicKeyHash) +
         1;
 
-    var transactions = [];
+    var transactions = <OperationModel>[];
 
     for (var i = 0; i < entrypoint.length; i++) {
       transactions.add(
@@ -148,7 +148,7 @@ class TezosNodeWriter {
         keyStore.publicKey,
         keyStore.publicKeyHash,
         counter - 1,
-        [...transactions as Iterable<OperationModel>]);
+        [...transactions]);
     return sendOperation(server, operations, signer, offset, null, preapply);
   }
 
