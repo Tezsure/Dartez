@@ -143,12 +143,8 @@ class TezosNodeWriter {
         ),
       );
     }
-    var operations = await appendRevealOperation(
-        server,
-        keyStore.publicKey,
-        keyStore.publicKeyHash,
-        counter - 1,
-        [...transactions]);
+    var operations = await appendRevealOperation(server, keyStore.publicKey,
+        keyStore.publicKeyHash, counter - 1, [...transactions]);
     return sendOperation(server, operations, signer, offset, null, preapply);
   }
 
@@ -359,8 +355,8 @@ class TezosNodeWriter {
 
     if (errors.length > 0) {
       print('errors found in response:\n$json');
-      throw Exception(
-          "Status code ==> 200\nResponse ==> $json \n Error ==> $errors");
+      // throw Exception(
+      //     "Status code ==> 200\nResponse ==> $json \n Error ==> $errors");
     }
   }
 

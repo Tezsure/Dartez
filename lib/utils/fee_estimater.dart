@@ -1,17 +1,19 @@
 import 'dart:convert';
 
-import 'package:dartez/dartez.dart';
-import 'package:flutter/foundation.dart';
 import 'package:dartez/chain/tezos/tezos_node_writer.dart';
+import 'package:dartez/dartez.dart';
 import 'package:dartez/helper/constants.dart';
 import 'package:dartez/helper/http_helper.dart';
 import 'package:dartez/models/operation_model.dart';
+import 'package:flutter/foundation.dart';
+
 import 'dart:math' as math;
 
 class FeeEstimater {
   String server;
   String chainId;
   List<OperationModel> operations;
+  int GAS_BUFFER = 100;
 
   FeeEstimater(this.server, this.operations, {this.chainId = 'main'});
 
@@ -39,7 +41,9 @@ class FeeEstimater {
           priorConsumedResources['storageCost'];
 
       operationResources.add({
-        'gas': gasLimitDelta + TezosConstants.GasLimitPadding,
+        'gas': gasLimitDelta == GAS_BUFFER
+            ? gasLimitDelta + TezosConstants.GasLimitPadding
+            : gasLimitDelta,
         'storageCost': storageLimitDelta + TezosConstants.StorageLimitPadding
       });
     }
@@ -50,8 +54,9 @@ class FeeEstimater {
             : 0;
 
     var validBranch = 'BMLxA4tQjiu1PT2x3dMiijgvMTQo8AVxkPBPpdtM8hCfiyiC1jz';
-    var gasLimitTotal =
-        operationResources.map((r) => r['gas']).fold<int>(0, (a, c) => (a + c).toInt());
+    var gasLimitTotal = operationResources
+        .map((r) => r['gas'])
+        .fold<int>(0, (a, c) => (a + c).toInt());
     var storageLimitTotal = operationResources
         .map((r) => r['storageCost'])
         .fold<int>(0, (a, c) => (a + c).toInt());
@@ -105,12 +110,15 @@ class FeeEstimater {
     var staticFee = 0;
     for (var ele in responseJSON['contents']) {
       try {
-        gas += int.parse(ele['metadata']['operation_result']['consumed_gas']
-                .toString());
+        gas += (int.parse(ele['metadata']['operation_result']
+                        ['consumed_milligas']
+                    .toString()) ~/
+                1000) +
+            GAS_BUFFER;
         storageCost += int.parse((ele['metadata']['operation_result']
-                        ['paid_storage_size_diff'] ??
-                    '0')
-                .toString());
+                    ['paid_storage_size_diff'] ??
+                '0')
+            .toString());
 
         if (ele['kind'] == 'origination' ||
             ele['metadata']['operation_result']
@@ -130,7 +138,8 @@ class FeeEstimater {
 
       for (var internalOperation in internalOperations) {
         var result = internalOperation['result'];
-        gas += int.parse(result['consumed_gas'] ?? '0');
+        gas += (int.parse(result['consumed_milligas'] ?? '0') ~/ 1000) +
+            GAS_BUFFER;
         storageCost += int.parse(result['paid_storage_size_diff'] ?? '0');
         if (internalOperation['kind'] == 'origination') {
           storageCost += TezosConstants.EmptyAccountStorageBurn;
@@ -163,7 +172,7 @@ class FeeEstimater {
   dryRunOperation(String server, String chainId,
       List<OperationModel> localOperations) async {
     const fake_signature =
-        'edsigu6xFLH2NpJ1VcYshpjW99Yc1TAL1m2XBqJyXrxcZQgBMo8sszw2zm626yjpA3pWMhjpsahLrWdmvX9cqhd4ZEUchuBuFYy';
+        'edsigtkpiSSschcaCt9pUVrpNPf7TTcgvgDEDD6NCEHMy8NNQJCGnMfLZzYoQj74yLjo9wx6MPVV29CvVzgi7qEcEUok3k7AuMg';
     var fakeBranch = await Dartez.getBlock(server);
     var payload = {
       'operation': {
