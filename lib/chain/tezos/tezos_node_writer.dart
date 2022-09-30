@@ -355,8 +355,8 @@ class TezosNodeWriter {
 
     if (errors.length > 0) {
       print('errors found in response:\n$json');
-      // throw Exception(
-      //     "Status code ==> 200\nResponse ==> $json \n Error ==> $errors");
+      throw Exception(
+          "Status code ==> 200\nResponse ==> $json \n Error ==> $errors");
     }
   }
 
