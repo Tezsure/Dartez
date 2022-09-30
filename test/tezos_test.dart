@@ -250,32 +250,19 @@ void main() {
     expect(storage, isNotNull);
   });
 
-  // shove grant police borrow dinosaur require provide aspect vacant pepper toss forward edge tonight enemy keep attract van hospital wedding guide bulk warfare wage
-  // tz1SqRELmys8STo1Gr2ZZegCZWpJjH6StUhf
-  // tz2C4Wv1XA4yF6FKBDMho5whWwBgyv7mCtvp
-  // using mnemonic and derivationPath
-  // [spsk2DYF2YvbqLaRh1WQ3mB68c6VFWXMdKrkgMm1cijeoREtwjKb6y, sppk7cab8SjETQQMDCkEiFSdpenctMP2NQnVFe4d7T69CqquSQ9GSYZ, tz2CpyRbLLcRsUhSjjbRbiChSQX5FbtdvLmx]
-
   test("Create new wallet tz2&tz1 prefix", () async {
-    // var mnemonic =
-    //     "shove grant police borrow dinosaur require provide aspect vacant pepper toss forward edge tonight enemy keep attract van hospital wedding guide bulk warfare wage";
-    // print(await Dartez.restoreIdentityFromDerivationPath(
-    //     "m/44'/1729'/0'/0'", mnemonic,
-    //     signerCurve: SignerCurve.SECP256K1));
-    KeyStoreModel keyStoreModel = KeyStoreModel(
-        publicKeyHash: "tz2CpyRbLLcRsUhSjjbRbiChSQX5FbtdvLmx",
-        secretKey: "spsk2DYF2YvbqLaRh1WQ3mB68c6VFWXMdKrkgMm1cijeoREtwjKb6y",
-        publicKey: "sppk7cab8SjETQQMDCkEiFSdpenctMP2NQnVFe4d7T69CqquSQ9GSYZ");
+    KeyStoreModel keyStoreModel =
+        KeyStoreModel(publicKeyHash: "", secretKey: "", publicKey: "");
 
     var signer = Dartez.createSigner(
         Dartez.writeKeyWithHint(keyStoreModel.secretKey, 'spsk'),
         signerCurve: SignerCurve.SECP256K1);
 
     var result = await Dartez.sendTransactionOperation(
-      "https://rpc.tzkt.io/mainnet",
+      "",
       signer,
       keyStoreModel,
-      'tz1USmQMoNCUUyk4BfeEGUyZRK2Bcc9zoK8C',
+      '',
       10,
       1500,
     );
@@ -285,5 +272,4 @@ void main() {
 
     print(signer.getKey());
   });
-
 }

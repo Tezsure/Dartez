@@ -88,39 +88,19 @@ class Dartez {
             GenerateKeys.readKeysWithHint(combinedKey.sublist(0, 32),
                 GenerateKeys.keyPrefixes[PrefixEnum.spsk]!),
             signerCurve);
-        // var hdWallet = HDWallet.fromSeed(Seed(mnemonic));
-        // hdWallet.generate(derivationPath);
-        // return WalletUtils().getKeysFromPrivateKey(
-        //     GenerateKeys.readKeysWithHint(
-        //         Uint8List.fromList(hex.decode(hdWallet.privateKey)),
-        //         GenerateKeys.keyPrefixes[PrefixEnum.spsk]!),
-        //     signerCurve);
       }
-
-      // keys = sodiumUtils.publicKey(combinedKey);
     } else {
       return await _unlockKeys(mnemonic: mnemonic, passphrase: password);
     }
-
-    // var secretKey = TezosMessageUtils.readKeyWithHint(keys.sk, "edsk");
-    // var publicKey = TezosMessageUtils.readKeyWithHint(keys.pk, "edpk");
-    // var publicKeyHash = GenerateKeys.computeKeyHash(
-    //     keys.pk, GenerateKeys.keyPrefixes[PrefixEnum.tz1]!);
-    // if (pkh != null && publicKeyHash != pkh) {
-    //   throw new Exception(
-    //       'The given mnemonic and passphrase do not correspond to the supplied public key hash');
-    // }
-
-    // return [secretKey, publicKey, publicKeyHash];
   }
 
   static List<String> getKeysFromSecretKey(String skKey) {
-    Uint8List secretKeyBytes = GenerateKeys.writeKeyWithHint(skKey, 'edsk');
-    KeyPair keys = sodiumUtils.publicKey(secretKeyBytes);
-    String pkKey = TezosMessageUtils.readKeyWithHint(keys.pk, 'edpk');
-    String pkKeyHash = GenerateKeys.computeKeyHash(
-        keys.pk, GenerateKeys.keyPrefixes[PrefixEnum.tz1]!);
-    return [skKey, pkKey, pkKeyHash];
+    if (skKey.startsWith("edsk")) {
+      return WalletUtils().getKeysFromPrivateKey(skKey, SignerCurve.ED25519);
+    } else if (skKey.startsWith("spsk")) {
+      return WalletUtils().getKeysFromPrivateKey(skKey, SignerCurve.SECP256K1);
+    }
+    return [];
   }
 
   static Future<List<String>> unlockFundraiserIdentity({
