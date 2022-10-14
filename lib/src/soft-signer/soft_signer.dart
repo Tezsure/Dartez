@@ -79,9 +79,9 @@ class SoftSigner {
   Uint8List signOperation(Uint8List uint8list) {
     if (signerCurve == SignerCurve.SECP256K1) {
       var privateKey = PrivateKey.fromHex(hex.encode(getKey()!));
-      return Uint8List.fromList(hex.decode(privateKey
-          .signature(hex.encode(TezosMessageUtils.simpleHash(uint8list, 32)))
-          .toRawHex()));
+      Signature signature = privateKey
+          .signature(hex.encode(TezosMessageUtils.simpleHash(uint8list, 32)));
+      return Uint8List.fromList(hex.decode(signature.toRawHex()));
     }
     return CryptoUtils.signDetached(TezosMessageUtils.simpleHash(uint8list, 32),
         Uint8List.fromList(getKey()!));

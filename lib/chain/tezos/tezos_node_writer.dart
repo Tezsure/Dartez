@@ -282,6 +282,7 @@ class TezosNodeWriter {
         hex.decode(forgedOperationGroup) + opSignature.toList());
     var base58signature = TezosMessageUtils.readSignatureWithHint(
         opSignature, signer.getSignerCurve());
+    print(base58signature);
     var opPair = {'bytes': signedOpGroup, 'signature': base58signature};
     var appliedOp = await preapplyOperation(
         server, blockHash, _blockHead['protocol'], operations, opPair);
@@ -355,8 +356,8 @@ class TezosNodeWriter {
 
     if (errors.length > 0) {
       print('errors found in response:\n$json');
-      throw Exception(
-          "Status code ==> 200\nResponse ==> $json \n Error ==> $errors");
+      // throw Exception(
+      //     "Status code ==> 200\nResponse ==> $json \n Error ==> $errors");
     }
   }
 

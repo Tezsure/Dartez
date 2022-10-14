@@ -29,6 +29,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.9.0"
+  base58check:
+    dependency: transitive
+    description:
+      name: base58check
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   bip39:
     dependency: "direct main"
     description:
@@ -214,6 +221,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.6.3"
+  kepler:
+    dependency: "direct main"
+    description:
+      name: kepler
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.3"
   logging:
     dependency: transitive
     description:
@@ -283,7 +297,7 @@ packages:
       name: pointycastle
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.5.1"
+    version: "3.6.2"
   pool:
     dependency: transitive
     description:

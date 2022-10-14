@@ -71,19 +71,23 @@ class GenerateKeys {
   }
 
   Uint8List serializeBigInt(BigInt bi) {
-    Uint8List array = Uint8List((bi.bitLength / 8).ceil());
-    for (int i = 0; i < array.length; i++) {
-      array[i] = (bi >> (i * 8)).toUnsigned(8).toInt();
-    }
-    return array;
+    
+    return Uint8List.fromList(hex.decode(bi.toRadixString(16)));
+
+    // Uint8List array = Uint8List((bi.bitLength / 8).ceil());
+    // for (int i = 0; i < array.length; i++) {
+    //   array[i] = (bi >> (i * 8)).toUnsigned(8).toInt();
+    // }
+    // return array;
   }
 
   BigInt deserializeBigInt(Uint8List array) {
-    var bi = BigInt.zero;
-    for (var byte in array.reversed) {
-      bi <<= 8;
-      bi |= BigInt.from(byte);
-    }
-    return bi;
+    return BigInt.parse(hex.encode(array));
+    // var bi = BigInt.zero;
+    // for (var byte in array.reversed) {
+    //   bi <<= 8;
+    //   bi |= BigInt.from(byte);
+    // }
+    // return bi;
   }
 }

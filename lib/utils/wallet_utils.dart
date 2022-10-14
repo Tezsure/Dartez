@@ -64,6 +64,8 @@ class WalletUtils {
           (pad + GenerateKeys().serializeBigInt(secpPk.publicKey.X).toList())
               .reversed
               .take(32)
+              .toList()
+              .reversed
               .toList());
       String publicKey = GenerateKeys.readKeysWithHint(
           _publicKey, GenerateKeys.keyPrefixes[PrefixEnum.sppk]!);
