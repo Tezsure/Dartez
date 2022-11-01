@@ -286,6 +286,11 @@ class TezosNodeWriter {
     var opPair = {'bytes': signedOpGroup, 'signature': base58signature};
     var appliedOp = await preapplyOperation(
         server, blockHash, _blockHead['protocol'], operations, opPair);
+/*     print("aplied op ${appliedOp.toString()}");
+    String? error = parseRPCOperationResult(appliedOp[0]);
+    if (error != '') {
+      throw Exception(error);
+    } */
     if (preapply != null && preapply) return opPair;
     var injectedOperation = await injectOperation(server, opPair);
 
@@ -356,18 +361,19 @@ class TezosNodeWriter {
 
     if (errors.length > 0) {
       print('errors found in response:\n$json');
+      throw Exception(errors);
       // throw Exception(
       //     "Status code ==> 200\nResponse ==> $json \n Error ==> $errors");
     }
   }
 
   static String? parseRPCOperationResult(result) {
-    if (result.status == 'failed') {
-      return "${result.status}: ${result.errors.map((e) => '(${e.kind}: ${e.id})').join(', ')}";
-    } else if (result.status == 'applied') {
+    if (result["contents"] == null) {
+      return "${result["id"].toString()}";
+    } else if (result["status"].toString() == 'applied') {
       return '';
     } else {
-      return result.status;
+      return result["status"].toString();
     }
   }
 
