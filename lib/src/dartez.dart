@@ -378,7 +378,8 @@ class Dartez {
         parameters,
         parameterFormat: codeFormat ?? TezosParameterFormat.Michelson,
         offset: offset ?? 54,
-        preapply: true);
+        preapply: true,
+        gasEstimation: true);
   }
 
   static Future<String?> getOperationStatus(
