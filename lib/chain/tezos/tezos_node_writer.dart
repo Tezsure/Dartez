@@ -120,6 +120,7 @@ class TezosNodeWriter {
     var parameterFormat = TezosParameterFormat.Michelson,
     offset = 54,
     bool? preapply,
+    bool? gasEstimation = false,
   }) async {
     var counter = await TezosNodeReader.getCounterForAccount(
             server, keyStore.publicKeyHash) +
@@ -145,7 +146,8 @@ class TezosNodeWriter {
     }
     var operations = await appendRevealOperation(server, keyStore.publicKey,
         keyStore.publicKeyHash, counter - 1, [...transactions]);
-    return sendOperation(server, operations, signer, offset, null, preapply);
+    return sendOperation(
+        server, operations, signer, offset, null, preapply, gasEstimation);
   }
 
   static sendIdentityActivationOperation(String server, SoftSigner signer,
@@ -271,7 +273,7 @@ class TezosNodeWriter {
 
   static Future<Map<String, Object?>> sendOperation(String server,
       List<OperationModel> operations, SoftSigner signer, int offset,
-      [blockHead, preapply]) async {
+      [blockHead, preapply, gasEstimation]) async {
     var _blockHead =
         blockHead ?? await TezosNodeReader.getBlockAtOffset(server, offset);
     var blockHash = _blockHead['hash'].toString().substring(0, 51);
@@ -291,6 +293,15 @@ class TezosNodeWriter {
     if (error != '') {
       throw Exception(error);
     } */
+    if (preapply != null &&
+        preapply &&
+        gasEstimation != null &&
+        gasEstimation) {
+      return {
+        'opPair': opPair,
+        'gasEstimation': operations[0].fee.toString(),
+      };
+    }
     if (preapply != null && preapply) return opPair;
     var injectedOperation = await injectOperation(server, opPair);
 
