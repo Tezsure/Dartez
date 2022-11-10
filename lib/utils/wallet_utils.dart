@@ -50,7 +50,7 @@ class WalletUtils {
           GenerateKeys.writeKeyWithHint(privateKey, 'edsk');
       KeyPair keys = Dartez.sodiumUtils.publicKey(secretKeyBytes);
       String pkKey = TezosMessageUtils.readKeyWithHint(keys.pk, 'edpk');
-      String pk = TezosMessageUtils.readKeyWithHint(keys.sk, 'edpk');
+      String pk = TezosMessageUtils.readKeyWithHint(keys.sk, 'edsk');
       String pkKeyHash = GenerateKeys.computeKeyHash(
           keys.pk, GenerateKeys.keyPrefixes[PrefixEnum.tz1]!);
       return [pk, pkKey, pkKeyHash];
