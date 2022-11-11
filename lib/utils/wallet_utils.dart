@@ -50,9 +50,10 @@ class WalletUtils {
           GenerateKeys.writeKeyWithHint(privateKey, 'edsk');
       KeyPair keys = Dartez.sodiumUtils.publicKey(secretKeyBytes);
       String pkKey = TezosMessageUtils.readKeyWithHint(keys.pk, 'edpk');
+      String pk = TezosMessageUtils.readKeyWithHint(keys.sk, 'edsk');
       String pkKeyHash = GenerateKeys.computeKeyHash(
           keys.pk, GenerateKeys.keyPrefixes[PrefixEnum.tz1]!);
-      return [privateKey, pkKey, pkKeyHash];
+      return [pk, pkKey, pkKeyHash];
     } else if (signerCurve == SignerCurve.SECP256K1) {
       PrivateKey secpPk = PrivateKey.fromHex(
           hex.encode(GenerateKeys.writeKeyWithHint(privateKey, "spsk")));
