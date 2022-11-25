@@ -4,7 +4,7 @@ import 'package:convert/convert.dart';
 import 'package:dartez/chain/tezos/tezos_message_utils.dart';
 import 'package:dartez/helper/password_generater.dart';
 import 'package:dartez/utils/crypto_utils.dart';
-import 'package:secp256k1/secp256k1.dart';
+import 'package:sec/sec.dart';
 
 enum SignerCurve { ED25519, SECP256K1, SECP256R1 }
 
@@ -78,10 +78,11 @@ class SoftSigner {
 
   Uint8List signOperation(Uint8List uint8list) {
     if (signerCurve == SignerCurve.SECP256K1) {
-      var privateKey = PrivateKey.fromHex(hex.encode(getKey()!));
-      Signature signature = privateKey
-          .signature(hex.encode(TezosMessageUtils.simpleHash(uint8list, 32)));
-      return Uint8List.fromList(hex.decode(signature.toRawHex()));
+      var sig = EC.secp256k1.generateSignature(
+          BigInt.parse("0x" + hex.encode(getKey()!)),
+          TezosMessageUtils.simpleHash(uint8list, 32));
+      return Uint8List.fromList(
+          hex.decode("${sig.r.toRadixString(16)}${sig.s.toRadixString(16)}"));
     }
     return CryptoUtils.signDetached(TezosMessageUtils.simpleHash(uint8list, 32),
         Uint8List.fromList(getKey()!));

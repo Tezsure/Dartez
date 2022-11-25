@@ -76,12 +76,12 @@ class FeeEstimater {
       estimatedFee += 16;
     }
 
-    debugPrint('group estimate' +
-        operationResources.toString() +
-        '' +
-        estimatedFee.toString() +
-        '' +
-        estimatedStorageBurn.toString());
+    // debugPrint('group estimate' +
+    //     operationResources.toString() +
+    //     '' +
+    //     estimatedFee.toString() +
+    //     '' +
+    //     estimatedStorageBurn.toString());
 
     return {
       'operationResources': operationResources,
@@ -128,7 +128,7 @@ class FeeEstimater {
           staticFee += 1270;
         }
       } catch (e) {
-        debugPrint(e.toString());
+        // debugPrint(e.toString());
       }
 
       var internalOperations = ele['metadata']['internal_operation_results'];
@@ -158,8 +158,8 @@ class FeeEstimater {
         TezosConstants.DefaultBakerVig;
     var estimatedStorageBurn =
         (storageCost * TezosConstants.StorageRate).ceil();
-    debugPrint(
-        'TezosNodeWriter.estimateOperation; gas: $gas, storage: $storageCost, fee estimate: $estimatedFee, burn estimate: $estimatedStorageBurn');
+    // debugPrint(
+    //     'TezosNodeWriter.estimateOperation; gas: $gas, storage: $storageCost, fee estimate: $estimatedFee, burn estimate: $estimatedStorageBurn');
 
     return {
       'gas': gas,
@@ -186,8 +186,6 @@ class FeeEstimater {
       'chain_id': 'NetXdQprcVkpaWU',
       ...payload,
     });
-
-    TezosNodeWriter.parseRPCError(jsonDecode(response.toString()));
 
     return jsonDecode(response.toString());
   }
