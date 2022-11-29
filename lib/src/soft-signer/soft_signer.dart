@@ -81,8 +81,8 @@ class SoftSigner {
       var sig = EC.secp256k1.generateSignature(
           BigInt.parse("0x" + hex.encode(getKey()!)),
           TezosMessageUtils.simpleHash(uint8list, 32));
-      return Uint8List.fromList(
-          hex.decode("${sig.r.toRadixString(16)}${sig.s.toRadixString(16)}"));
+      return Uint8List.fromList(hex.decode(
+          "${sig.r.toRadixString(16).padLeft(64, '0')}${sig.s.toRadixString(16).padLeft(64, '0')}"));
     }
     return CryptoUtils.signDetached(TezosMessageUtils.simpleHash(uint8list, 32),
         Uint8List.fromList(getKey()!));
