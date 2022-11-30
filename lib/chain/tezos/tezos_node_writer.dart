@@ -12,7 +12,7 @@ import 'package:dartez/models/key_store_model.dart';
 import 'package:dartez/models/operation_model.dart';
 import 'package:dartez/src/soft-signer/soft_signer.dart';
 import 'package:dartez/types/tezos/tezos_chain_types.dart';
-import 'package:dartez/utils/gas_fee_calculator.dart';
+import 'package:dartez/utils/fee_estimater.dart';
 
 class TezosNodeWriter {
   static Future<Map<String, Object?>> sendTransactionOperation(String server,
@@ -36,17 +36,13 @@ class TezosNodeWriter {
     var blockHead = results[1];
     isKeyRevealed = !isKeyRevealed ? results[2] as bool : isKeyRevealed;
 
-    var estimate = Estimate(TezosConstants.DefaultTransactionGasLimit * 1000,
-        TezosConstants.DefaultTransactionStorageLimit, 162, 250, fee);
-
     OperationModel transaction = new OperationModel(
       destination: to,
       amount: amount.toString(),
       counter: counter,
-      fee: estimate.suggestedFeeMutez.toString(),
       source: keyStore.publicKeyHash,
-      gasLimit: estimate.gasLimit,
-      storageLimit: estimate.storageLimit,
+      gasLimit: TezosConstants.DefaultTransactionGasLimit,
+      storageLimit: TezosConstants.DefaultTransactionStorageLimit,
     );
 
     var operations = await appendRevealOperation(
@@ -66,17 +62,11 @@ class TezosNodeWriter {
             server, keyStore.publicKeyHash) +
         1;
 
-    var estimate = Estimate(TezosConstants.DefaultDelegationGasLimit * 1000,
-        TezosConstants.DefaultDelegationStorageLimit, 162, 250, fee);
-
     OperationModel delegation = new OperationModel(
       counter: counter,
       kind: 'delegation',
-      fee: estimate.suggestedFeeMutez.toString(),
       source: keyStore.publicKeyHash,
       delegate: delegate,
-      gasLimit: estimate.gasLimit,
-      storageLimit: estimate.storageLimit,
     );
 
     var operations = await appendRevealOperation(server, keyStore.publicKey,
@@ -130,12 +120,13 @@ class TezosNodeWriter {
     var parameterFormat = TezosParameterFormat.Michelson,
     offset = 54,
     bool? preapply,
+    bool? gasEstimation = false,
   }) async {
     var counter = await TezosNodeReader.getCounterForAccount(
             server, keyStore.publicKeyHash) +
         1;
 
-    var transactions = [];
+    var transactions = <OperationModel>[];
 
     for (var i = 0; i < entrypoint.length; i++) {
       transactions.add(
@@ -153,13 +144,10 @@ class TezosNodeWriter {
         ),
       );
     }
-    var operations = await appendRevealOperation(
-        server,
-        keyStore.publicKey,
-        keyStore.publicKeyHash,
-        counter - 1,
-        [...transactions as Iterable<OperationModel>]);
-    return sendOperation(server, operations, signer, offset, null, preapply);
+    var operations = await appendRevealOperation(server, keyStore.publicKey,
+        keyStore.publicKeyHash, counter - 1, [...transactions]);
+    return sendOperation(
+        server, operations, signer, offset, null, preapply, gasEstimation);
   }
 
   static sendIdentityActivationOperation(String server, SoftSigner signer,
@@ -177,15 +165,11 @@ class TezosNodeWriter {
     var counter = (await TezosNodeReader.getCounterForAccount(
             server, keyStore.publicKeyHash)) +
         1;
-    var estimate = Estimate(10000 * 1000, 0, 162, 250, fee);
 
     var revealOp = OperationModel(
       kind: 'reveal',
       source: keyStore.publicKeyHash,
-      fee: estimate.suggestedFeeMutez.toString(),
       counter: counter,
-      gasLimit: estimate.gasLimit,
-      storageLimit: estimate.storageLimit,
       publicKey: keyStore.publicKey,
     );
 
@@ -204,16 +188,11 @@ class TezosNodeWriter {
       entrypoint,
       String parameters,
       TezosParameterFormat parameterFormat) {
-    var estimate = Estimate(gasLimit * 1500, storageLimit, 162, 250, fee);
-
     OperationModel transaction = new OperationModel(
       destination: contract,
       amount: amount.toString(),
       counter: counter,
-      fee: estimate.suggestedFeeMutez.toString(),
       source: publicKeyHash,
-      gasLimit: estimate.gasLimit,
-      storageLimit: estimate.storageLimit,
     );
 
     if (parameters != '') {
@@ -255,6 +234,9 @@ class TezosNodeWriter {
             server, publicKeyHash)
         : isKeyRevealed;
     var counter = accountOperationIndex + 1;
+    for (var i = 0; i < operations.length; i++) {
+      operations[i].fee = '1500'; // default gas fee
+    }
     if (!isKeyRevealed) {
       var revealOp = OperationModel(
         counter: counter,
@@ -269,14 +251,29 @@ class TezosNodeWriter {
         var c = accountOperationIndex + 2 + index;
         operations[index].counter = c;
       }
+
       return <OperationModel>[revealOp, ...operations];
+    }
+
+    return prepareOperation(server, operations);
+  }
+
+  static Future<List<OperationModel>> prepareOperation(
+      String server, List<OperationModel> operations) async {
+    var feeEstimater = FeeEstimater(server, operations);
+    var estimate = await feeEstimater.getEstimateOperationGroup();
+    operations[0].fee = estimate['estimatedFee'].toString();
+    for (var i = 0; i < operations.length; i++) {
+      operations[i].gasLimit = estimate['operationResources'][i]['gas'];
+      operations[i].storageLimit =
+          estimate['operationResources'][i]['storageCost'];
     }
     return operations;
   }
 
   static Future<Map<String, Object?>> sendOperation(String server,
       List<OperationModel> operations, SoftSigner signer, int offset,
-      [blockHead, preapply]) async {
+      [blockHead, preapply, gasEstimation]) async {
     var _blockHead =
         blockHead ?? await TezosNodeReader.getBlockAtOffset(server, offset);
     var blockHash = _blockHead['hash'].toString().substring(0, 51);
@@ -290,6 +287,15 @@ class TezosNodeWriter {
     var opPair = {'bytes': signedOpGroup, 'signature': base58signature};
     var appliedOp = await preapplyOperation(
         server, blockHash, _blockHead['protocol'], operations, opPair);
+    if (preapply != null &&
+        preapply &&
+        gasEstimation != null &&
+        gasEstimation) {
+      return {
+        'opPair': opPair,
+        'gasEstimation': operations[0].fee.toString(),
+      };
+    }
     if (preapply != null && preapply) return opPair;
     var injectedOperation = await injectOperation(server, opPair);
 
@@ -359,19 +365,17 @@ class TezosNodeWriter {
     }
 
     if (errors.length > 0) {
-      print('errors found in response:\n$json');
-      throw Exception(
-          "Status code ==> 200\nResponse ==> $json \n Error ==> $errors");
+      throw Exception(errors);
     }
   }
 
   static String? parseRPCOperationResult(result) {
-    if (result.status == 'failed') {
-      return "${result.status}: ${result.errors.map((e) => '(${e.kind}: ${e.id})').join(', ')}";
-    } else if (result.status == 'applied') {
+    if (result["contents"] == null) {
+      return "${result["id"].toString()}";
+    } else if (result["status"].toString() == 'applied') {
       return '';
     } else {
-      return result.status;
+      return result["status"].toString();
     }
   }
 
@@ -407,15 +411,11 @@ class TezosNodeWriter {
       parsedCode = jsonDecode(code);
       parsedStorage = jsonDecode(storage);
     }
-    var estimate = Estimate(gasLimit * 1000, storageLimit, 162, 250, fee);
 
     return OperationModel(
       kind: 'origination',
       source: keyStore.publicKeyHash,
-      fee: estimate.suggestedFeeMutez.toString(),
       counter: counter,
-      gasLimit: estimate.gasLimit,
-      storageLimit: estimate.storageLimit,
       amount: amount.toString(),
       delegate: delegate,
       script: {

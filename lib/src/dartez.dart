@@ -6,6 +6,7 @@ import 'dart:core';
 import 'package:convert/convert.dart';
 import 'package:blake2b/blake2b_hash.dart';
 import 'package:crypto/crypto.dart';
+import 'package:dartez/utils/wallet_utils.dart';
 import 'package:ed25519_hd_key/ed25519_hd_key.dart';
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:bs58check/bs58check.dart' as bs58check;
@@ -38,16 +39,13 @@ class Dartez {
     return bip39.generateMnemonic(strength: strength);
   }
 
-  static Future<List<String>> getKeysFromMnemonic({
+  static List<String> getKeysFromMnemonic({
     required String mnemonic,
-  }) async {
+    SignerCurve signerCurve = SignerCurve.ED25519,
+  }) {
     Uint8List seed = bip39.mnemonicToSeed(mnemonic);
     Uint8List seedLength32 = seed.sublist(0, 32);
-    KeyPair keyPair = sodiumUtils.cryptoSignSeedKeypair(seedLength32);
-    String skKey = GenerateKeys.readKeysWithHint(keyPair.sk, '2bf64e07');
-    String pkKey = GenerateKeys.readKeysWithHint(keyPair.pk, '0d0f25d9');
-    String pkKeyHash = GenerateKeys.computeKeyHash(keyPair.pk);
-    return [skKey, pkKey, pkKeyHash];
+    return WalletUtils().getKeysFromMnemonic(seedLength32, signerCurve);
   }
 
   static Future<List<String>> getKeysFromMnemonicAndPassphrase({
@@ -62,7 +60,10 @@ class Dartez {
 
   static Future<List<String>> restoreIdentityFromDerivationPath(
       String derivationPath, String mnemonic,
-      {String password = '', String? pkh, bool validate = true}) async {
+      {String password = '',
+      String? pkh,
+      bool validate = true,
+      SignerCurve signerCurve = SignerCurve.ED25519}) async {
     if (validate) {
       if (![12, 15, 18, 21, 24].contains(mnemonic.split(' ').length)) {
         throw new Exception("Invalid mnemonic length.");
@@ -72,34 +73,34 @@ class Dartez {
       }
     }
 
-    KeyPair keys;
     Uint8List seed = bip39.mnemonicToSeed(mnemonic);
 
     if (derivationPath.length > 0) {
       KeyData keysource = await ED25519_HD_KEY.derivePath(derivationPath, seed);
       var combinedKey = Uint8List.fromList(keysource.key + keysource.chainCode);
-      keys = sodiumUtils.publicKey(combinedKey);
+      if (signerCurve == SignerCurve.ED25519) {
+        return WalletUtils().getKeysFromPrivateKey(
+            GenerateKeys.readKeysWithHint(
+                combinedKey, GenerateKeys.keyPrefixes[PrefixEnum.edsk]!),
+            signerCurve);
+      } else {
+        return WalletUtils().getKeysFromPrivateKey(
+            GenerateKeys.readKeysWithHint(combinedKey.sublist(0, 32),
+                GenerateKeys.keyPrefixes[PrefixEnum.spsk]!),
+            signerCurve);
+      }
     } else {
       return await _unlockKeys(mnemonic: mnemonic, passphrase: password);
     }
-
-    var secretKey = TezosMessageUtils.readKeyWithHint(keys.sk, "edsk");
-    var publicKey = TezosMessageUtils.readKeyWithHint(keys.pk, "edpk");
-    var publicKeyHash = GenerateKeys.computeKeyHash(keys.pk);
-    if (pkh != null && publicKeyHash != pkh) {
-      throw new Exception(
-          'The given mnemonic and passphrase do not correspond to the supplied public key hash');
-    }
-
-    return [secretKey, publicKey, publicKeyHash];
   }
 
   static List<String> getKeysFromSecretKey(String skKey) {
-    Uint8List secretKeyBytes = GenerateKeys.writeKeyWithHint(skKey, 'edsk');
-    KeyPair keys = sodiumUtils.publicKey(secretKeyBytes);
-    String pkKey = TezosMessageUtils.readKeyWithHint(keys.pk, 'edpk');
-    String pkKeyHash = GenerateKeys.computeKeyHash(keys.pk);
-    return [skKey, pkKey, pkKeyHash];
+    if (skKey.startsWith("edsk")) {
+      return WalletUtils().getKeysFromPrivateKey(skKey, SignerCurve.ED25519);
+    } else if (skKey.startsWith("spsk")) {
+      return WalletUtils().getKeysFromPrivateKey(skKey, SignerCurve.SECP256K1);
+    }
+    return [];
   }
 
   static Future<List<String>> unlockFundraiserIdentity({
@@ -171,7 +172,8 @@ class Dartez {
     KeyPair keyPair = sodiumUtils.cryptoSignSeedKeypair(seed);
     String skKey = GenerateKeys.readKeysWithHint(keyPair.sk, '2bf64e07');
     String pkKey = GenerateKeys.readKeysWithHint(keyPair.pk, '0d0f25d9');
-    String pkKeyHash = GenerateKeys.computeKeyHash(keyPair.pk);
+    String pkKeyHash = GenerateKeys.computeKeyHash(
+        keyPair.pk, GenerateKeys.keyPrefixes[PrefixEnum.tz1]!);
     return [skKey, pkKey, pkKeyHash];
   }
 
@@ -198,8 +200,10 @@ class Dartez {
         TezosLanguageUtil.normalizePrimitiveRecordOrder(jsonDecode(data)));
   }
 
-  static createSigner(Uint8List secretKey, {int validity = 60}) {
-    return SoftSigner.createSigner(secretKey, validity);
+  static SoftSigner createSigner(Uint8List secretKey,
+      {int validity = 60, SignerCurve signerCurve = SignerCurve.ED25519}) {
+    return SoftSigner.createSigner(secretKey, validity,
+        signerCurve: signerCurve);
   }
 
   static sendTransactionOperation(String server, SoftSigner signer,
@@ -374,7 +378,8 @@ class Dartez {
         parameters,
         parameterFormat: codeFormat ?? TezosParameterFormat.Michelson,
         offset: offset ?? 54,
-        preapply: true);
+        preapply: true,
+        gasEstimation: true);
   }
 
   static Future<String?> getOperationStatus(
