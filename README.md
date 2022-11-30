@@ -4,11 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 [![Github issues](https://img.shields.io/github/issues/Tezsure/Dartez)](https://github.com/Tezsure/Dartez/issues?q=is%3Aissue+is%3Aopen+)
 
-[![Tezster banner](dartez.png)](https://github.com/Tezsure)
+[![Dartez banner](https://raw.githubusercontent.com/Tezsure/Dartez/main/dartez.png)](https://github.com/Tezsure)
 A library for building decentralized applications in Flutter, currently focused on the Tezos platform. Dartez package contains all the function that is required to build tezos application.
-
-
-
 
 ## What Is Tezos
 
@@ -21,10 +18,8 @@ Check out the [example](https://github.com/Tezsure/Dartez/tree/main/example) dir
 For usage guidance follow our **[documentation page](https://docs.dartez.io/)**.
 <br>
 
-
-*NOTE:
-Use stable version of flutter to avoid package conflicts.*
-
+_NOTE:
+Use stable version of flutter to avoid package conflicts._
 
 ## Contributing
 

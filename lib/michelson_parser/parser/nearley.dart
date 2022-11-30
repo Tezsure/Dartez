@@ -11,7 +11,7 @@ class Nearley {
 
   var lexer;
   var lexerState;
-  late var table;
+  late List<Column?> table;
 
   int? current;
   late var results;
@@ -55,7 +55,7 @@ class Nearley {
     var token = lexer.next();
     var column;
     while (token != null) {
-      column = table[current];
+      column = table[current!];
 
       if (current != 0) table[current! - 1] = null;
 
@@ -111,8 +111,8 @@ class Nearley {
     var considerations = [];
     var start = this.grammar!.start;
     var column = this.table[this.table.length - 1];
-    column.states.forEach((t) {
-      if (t.rule.name == start &&
+    column!.states.forEach((t) {
+      if (t!.rule.name == start &&
           t.dot == t.rule.symbols.length &&
           t.reference == 0 &&
           t.data != fail) {
@@ -135,8 +135,8 @@ class Nearley {
         '. Instead, I was expecting to see one of the following:\n');
     var lastColumnIndex = this.table.length - 2;
     var lastColumn = this.table[lastColumnIndex];
-    var expectantStates = lastColumn.states.where((state) {
-      if (state.rule.symbols.isNotEmpty) {
+    var expectantStates = lastColumn!.states.where((state) {
+      if (state!.rule.symbols.isNotEmpty) {
         var nextSymbol =
             state.rule.symbols[state.dot - 1 < 0 ? 0 : state.dot - 1];
         return nextSymbol != null && !(nextSymbol is String);
@@ -181,8 +181,8 @@ class Nearley {
     lines.add(lexerMessage);
     var lastColumnIndex = this.table.length - 1;
     var lastColumn = this.table[lastColumnIndex];
-    var expectantStates = lastColumn.states.where((state) {
-      var nextSymbol = state.rule.symbols[state.dot] ?? null;
+    var expectantStates = lastColumn!.states.where((state) {
+      var nextSymbol = state!.rule.symbols[state.dot] ?? null;
       return nextSymbol != null && !(nextSymbol is String);
     }).toList();
 

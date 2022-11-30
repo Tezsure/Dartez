@@ -1,8 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:convert/convert.dart';
+import 'package:dartez/helper/generateKeys.dart';
+import 'package:dartez/src/soft-signer/soft_signer.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dartez/dartez.dart';
+import 'package:secp256k1/secp256k1.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -244,5 +248,28 @@ void main() {
     var storage = await Dartez.getContractStorage(server, accountHash);
 
     expect(storage, isNotNull);
+  });
+
+  test("Create new wallet tz2&tz1 prefix", () async {
+    KeyStoreModel keyStoreModel =
+        KeyStoreModel(publicKeyHash: "", secretKey: "", publicKey: "");
+
+    var signer = Dartez.createSigner(
+        Dartez.writeKeyWithHint(keyStoreModel.secretKey, 'spsk'),
+        signerCurve: SignerCurve.SECP256K1);
+
+    var result = await Dartez.sendTransactionOperation(
+      "",
+      signer,
+      keyStoreModel,
+      '',
+      10,
+      1500,
+    );
+
+    expect(result['operationGroupID'], isNotNull);
+    expect(result['appliedOp'], isNotNull);
+
+    print(signer.getKey());
   });
 }
