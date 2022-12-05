@@ -5,7 +5,7 @@
 [![Github issues](https://img.shields.io/github/issues/Tezsure/Dartez)](https://github.com/Tezsure/Dartez/issues?q=is%3Aissue+is%3Aopen+)
 
 [![Dartez banner](https://raw.githubusercontent.com/Tezsure/Dartez/main/dartez.png)](https://github.com/Tezsure)
-A library for building decentralized applications in Flutter, currently focused on the Tezos platform. Dartez package contains all the function that is required to build tezos application.
+A library for building decentralized applications in Flutter, currently focused on the Tezos platform. Dartez package contains all the function that is required to build tezos application. The package supports both tz1 & tz2 addresses.
 
 ## What Is Tezos
 
