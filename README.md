@@ -41,7 +41,7 @@ For usage guidance follow our [documentation](https://docs.dartez.io/).
 
 - [Telegram](https://t.me/tezster)
 - [Twitter](https://twitter.com/tezsure)
-<br>
+
 ## Contributing
 
 Dartez is open source and we love to receive contributions from whosoever passionate with the technology.
