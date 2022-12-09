@@ -54,4 +54,4 @@ File feature requests and bugs at the [issue tracker](https://github.com/Tezsure
 
 ## Extra
 
-We’re building a lot of exciting features which will be released soon, So stay tuned with our updates and releases!
+We’re building a lot of exciting features which will be released soon, So stay tuned with our updates and releases.
