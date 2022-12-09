@@ -1,7 +1,4 @@
-# dartez example
-
-<!-- [![Tezster banner](https://tezster.s3-ap-southeast-1.amazonaws.com/TEZSTER_CLI/1_jDB5enULQVo2UfeiwD32qA.png)](https://github.com/Tezsure) -->
-An example to demonstrate the dartez package
+An example to demonstrate how to use dartez package
 
 ## Getting Started
 
