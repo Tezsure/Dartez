@@ -71,8 +71,8 @@ class GenerateKeys {
   }
 
   Uint8List serializeBigInt(BigInt bi) {
-    
-    return Uint8List.fromList(hex.decode(bi.toRadixString(16)));
+    return Uint8List.fromList(
+        hex.decode(bi.toRadixString(16).padLeft(64, '0')));
 
     // Uint8List array = Uint8List((bi.bitLength / 8).ceil());
     // for (int i = 0; i < array.length; i++) {
