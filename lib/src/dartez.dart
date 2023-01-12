@@ -247,6 +247,8 @@ class Dartez {
     String storage, {
     TezosParameterFormat codeFormat = TezosParameterFormat.Micheline,
     int offset = 54,
+    bool? preapply,
+    bool? gasEstimation = false,
   }) async {
     assert(keyStore.publicKey != null);
     assert(keyStore.secretKey != null);
@@ -263,6 +265,8 @@ class Dartez {
       storage,
       codeFormat,
       offset,
+      preapply: preapply,
+      gasEstimation: gasEstimation,
     );
   }
 
