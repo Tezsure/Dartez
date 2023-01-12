@@ -266,7 +266,10 @@ class TezosNodeWriter {
       String server, List<OperationModel> operations) async {
     var feeEstimater = FeeEstimater(server, operations);
     var estimate = await feeEstimater.getEstimateOperationGroup();
-    operations[0].fee = estimate['estimatedFee'].toString();
+    operations[0].fee =
+        (estimate['estimatedFee'] + estimate['estimatedStorageBurn'])
+            .toString();
+
     for (var i = 0; i < operations.length; i++) {
       operations[i].gasLimit = estimate['operationResources'][i]['gas'];
       operations[i].storageLimit =
