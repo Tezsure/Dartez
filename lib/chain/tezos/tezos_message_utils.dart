@@ -157,7 +157,7 @@ class TezosMessageUtils {
     if (value == 0 || value == '0') {
       return '00';
     }
-    var n = BigInt.from(value).abs();
+    var n = value is String ? BigInt.parse(value) : BigInt.from(value).abs();
 
     var l = n.bitLength;
     var arr = [];
@@ -170,7 +170,7 @@ class TezosMessageUtils {
         byte = n & BigInt.parse('0x7f');
         n = n >> 7;
       }
-      if (value < 0 && i == 0) {
+      if ((value is String ? value.startsWith("-") : value < 0) && i == 0) {
         byte = byte | BigInt.parse('0x40');
       }
       if (i + 7 < l) {
@@ -189,11 +189,6 @@ class TezosMessageUtils {
       return str;
     }).join('');
     return output;
-    // return arr
-    //     .map((w) => ('0' + w.toRadixString(16))
-    //         .substring(0, w.toRadixString(16).length - 2))
-    //     .toList()
-    //     .join('');
   }
 
   static String? writeString(value) {
