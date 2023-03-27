@@ -256,7 +256,7 @@ class TezosNodeWriter {
         operations[index].counter = c;
       }
 
-      return <OperationModel>[revealOp, ...operations];
+      return prepareOperation(server,[revealOp, ...operations]);
     }
 
     return prepareOperation(server, operations);
