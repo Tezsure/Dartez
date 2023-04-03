@@ -76,13 +76,6 @@ class FeeEstimater {
       estimatedFee += 16;
     }
 
-    // debugPrint('group estimate' +
-    //     operationResources.toString() +
-    //     '' +
-    //     estimatedFee.toString() +
-    //     '' +
-    //     estimatedStorageBurn.toString());
-
     return {
       'operationResources': operationResources,
       'estimatedFee': estimatedFee.ceil(),
@@ -92,15 +85,11 @@ class FeeEstimater {
 
   estimateOperation(String server, String chainId,
       List<OperationModel> priorTransactions) async {
-    var naiveOperationGasCap = math
-        .min((TezosConstants.BlockGasCap / priorTransactions.length).floor(),
-            TezosConstants.OperationGasCap)
-        .toString();
 
     var localOperations = [...priorTransactions]
         .map((e) => e
-          ..gasLimit = int.parse(naiveOperationGasCap)
-          ..storageLimit = TezosConstants.OperationStorageCap)
+          ..gasLimit = TezosConstants.OperationGasCap ~/ this.operations.length
+          ..storageLimit = TezosConstants.OperationStorageCap ~/ this.operations.length)
         .toList();
 
     var responseJSON = await dryRunOperation(server, chainId, localOperations);
