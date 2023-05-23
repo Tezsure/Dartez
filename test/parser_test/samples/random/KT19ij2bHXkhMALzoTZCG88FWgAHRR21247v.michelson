@@ -1,0 +1,1 @@
+parameter (bytes %event); storage (pair (unit %u) (big_map %metadata string bytes)); code { UNPAIR ; DIP { UNPAIR 2 } ; DROP ; PAIR 2 ; NIL operation ; PAIR }

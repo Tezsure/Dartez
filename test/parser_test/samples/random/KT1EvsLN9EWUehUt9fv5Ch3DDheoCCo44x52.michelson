@@ -1,0 +1,1 @@
+parameter (unit %slotMachine); storage (pair (address %admin) (bytes %randomHash)); code { CDR ; UNIT ; PUSH mutez 0 ; NONE key_hash ; CREATE_CONTRACT { parameter unit ; storage unit ; code { CDR ; NIL operation ; PAIR } } ; DROP ; PACK ; UPDATE 2 ; NIL operation ; PAIR }

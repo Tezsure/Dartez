@@ -55,3 +55,6 @@ File feature requests and bugs at the [issue tracker](https://github.com/Tezsure
 ## Extra
 
 We’re building a lot of exciting features which will be released soon, So stay tuned with our updates and releases.
+
+## Security-audits
+- [Security-audits](https://github.com/Tezsure/security-audits)

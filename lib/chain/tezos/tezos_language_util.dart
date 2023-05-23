@@ -1,15 +1,16 @@
-import 'package:dartez/michelson_parser/michelson_parser.dart';
+import 'package:dartez/michelson_parser/parser.dart';
 
 class TezosLanguageUtil {
   static var primitiveRecordOrder = ["prim", "args", "annots"];
 
-  static String? translateMichelsonToMicheline(String code) {
-    var result = MichelsonParser.parseMichelson(code);
+  static String? translateMichelsonScriptToMicheline(String code) {
+    var result = Parser.parseMichelsonScript(code);
     return result;
   }
 
-  static String? translateMichelineToHex(p) {
-    return MichelsonParser.translateMichelineToHex(p);
+  static String? translateMichelsonExpressionToMicheline(String code) {
+    var result = Parser.parseMichelsonExpression(code);
+    return result;
   }
 
   static dynamic normalizePrimitiveRecordOrder(data) {

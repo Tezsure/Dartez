@@ -1,0 +1,1 @@
+parameter (unit %buy); storage unit; code { CDR ; NIL operation ; SENDER ; CONTRACT unit ; IF_NONE { PUSH int 6 ; FAILWITH } {} ; PUSH mutez 10000000 ; UNIT ; TRANSFER_TOKENS ; CONS ; PAIR }

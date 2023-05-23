@@ -3,10 +3,8 @@ import 'dart:typed_data';
 import 'package:blake2b/blake2b_hash.dart';
 import 'package:bs58check/bs58check.dart' as bs58check;
 import 'package:convert/convert.dart';
-import 'package:dartez/chain/tezos/tezos_language_util.dart';
 import 'package:dartez/helper/generateKeys.dart';
 import 'package:dartez/src/soft-signer/soft_signer.dart';
-import 'package:dartez/types/tezos/tezos_chain_types.dart';
 
 class TezosMessageUtils {
   static String writeBranch(String branch) {
@@ -84,11 +82,14 @@ class TezosMessageUtils {
     }
     var hint = hex.substring(0, 2);
     if (hint == "00") {
-      return GenerateKeys.readKeysWithHint(b, '0d0f25d9');
+      return GenerateKeys.readKeysWithHint(
+          b, GenerateKeys.keyPrefixes[PrefixEnum.edpk]!);
     } else if (hint == "01" && hex.length == 68) {
-      return GenerateKeys.readKeysWithHint(b, '03fee256');
+      return GenerateKeys.readKeysWithHint(
+          b, GenerateKeys.keyPrefixes[PrefixEnum.sppk]!);
     } else if (hint == "02" && hex.length == 68) {
-      return GenerateKeys.readKeysWithHint(b, '03b28b7f');
+      return GenerateKeys.readKeysWithHint(
+          b, GenerateKeys.keyPrefixes[PrefixEnum.p2pk]!);
     } else {
       throw new Exception('Unrecognized key type');
     }
@@ -98,7 +99,8 @@ class TezosMessageUtils {
     Uint8List key = !(b.runtimeType == Uint8List) ? Uint8List.fromList(b) : b;
     String keyHex = hex.encode(key);
     if (hint == 'edsk') {
-      return GenerateKeys.readKeysWithHint(b, '2bf64e07');
+      return GenerateKeys.readKeysWithHint(
+          b, GenerateKeys.keyPrefixes[PrefixEnum.edsk]!);
     } else if (hint == 'edpk') {
       return readPublicKey("00$keyHex", b);
     } else if (hint == 'sppk') {
@@ -110,18 +112,21 @@ class TezosMessageUtils {
     }
   }
 
-  static Uint8List simpleHash(Uint8List message, int size) {
-    return Uint8List.fromList(Blake2bHash.hashWithDigestSize(256, message));
+  static Uint8List simpleHash(Uint8List message, [int size = 256]) {
+    return Uint8List.fromList(Blake2bHash.hashWithDigestSize(size, message));
   }
 
   static String readSignatureWithHint(Uint8List opSignature, SignerCurve hint) {
     opSignature = Uint8List.fromList(opSignature);
     if (hint == SignerCurve.ED25519) {
-      return GenerateKeys.readKeysWithHint(opSignature, '09f5cd8612');
+      return GenerateKeys.readKeysWithHint(
+          opSignature, GenerateKeys.keyPrefixes[PrefixEnum.edsig]!);
     } else if (hint == SignerCurve.SECP256K1) {
-      return GenerateKeys.readKeysWithHint(opSignature, '0d7365133f');
+      return GenerateKeys.readKeysWithHint(
+          opSignature, GenerateKeys.keyPrefixes[PrefixEnum.spsig]!);
     } else if (hint == SignerCurve.SECP256R1) {
-      return GenerateKeys.readKeysWithHint(opSignature, '36f02c34');
+      return GenerateKeys.readKeysWithHint(
+          opSignature, GenerateKeys.keyPrefixes[PrefixEnum.p2sig]!);
     } else {
       throw Exception('Unrecognized signature hint, "$hint"');
     }
@@ -225,7 +230,16 @@ class TezosMessageUtils {
     } else if (implicitHint == "0002") {
       return GenerateKeys.readKeysWithHint(b, '06a1a4');
     } else if (hexValue.substring(0, 2) == "01" && hexValue.length == 44) {
-      return GenerateKeys.readKeysWithHint(b, '025a79');
+      return GenerateKeys.readKeysWithHint(
+          Uint8List.fromList(
+            hex.decode(
+              hexValue.substring(
+                2,
+                42,
+              ),
+            ),
+          ),
+          '025a79');
     } else {
       throw new Exception("Unrecognized address type");
     }
@@ -242,7 +256,7 @@ class TezosMessageUtils {
     } else if (hint == 'tz3') {
       return readAddress("0002$hexValue", b);
     } else if (hint == 'kt1') {
-      return readAddress("01$hexValue}00", b);
+      return readAddress("01${hexValue}00", b);
     } else {
       throw new Exception("Unrecognized address hint, '$hint'");
     }
@@ -266,20 +280,8 @@ class TezosMessageUtils {
         var buffer = hex.encode(value);
         return '050a${dataLength(buffer.length / 2)}$buffer';
       default:
-        try {
-          if (format == TezosParameterFormat.Micheline) {
-            return '05${TezosLanguageUtil.translateMichelineToHex(value)}';
-          } else if (format == TezosParameterFormat.Michelson) {
-            var micheline =
-                TezosLanguageUtil.translateMichelsonToMicheline(value)!;
-            return '05${TezosLanguageUtil.translateMichelineToHex(micheline)}';
-          } else {
-            throw new Exception('Unsupported format $format provided');
-          }
-        } catch (e) {
-          throw new Exception(
-              'Unrecognized data type or format: $type, $format : $e');
-        }
+        throw new Exception('Unrecognized data type or format: $type, $format');
+      // }
     }
   }
 }

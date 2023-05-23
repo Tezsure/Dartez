@@ -1,0 +1,1 @@
+parameter bytes; storage (pair (big_map %metadata string bytes) (address %owner)); code { CDR ; NIL operation ; PAIR }

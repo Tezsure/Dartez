@@ -1,0 +1,1 @@
+parameter int; storage (pair (int %counter) (string %jsonnet)); code { UNPAIR ; DUP 2 ; CDR ; SWAP ; DIG 2 ; CAR ; ADD ; PAIR ; NIL operation ; PAIR }

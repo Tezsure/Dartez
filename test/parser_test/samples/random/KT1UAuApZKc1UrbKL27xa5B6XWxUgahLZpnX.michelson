@@ -1,0 +1,1 @@
+parameter (or (address %set_address) (nat %set_nat)); storage (pair (address %address) (nat %nat)); code { UNPAIR ; IF_LEFT { UPDATE 1 } { UPDATE 2 } ; NIL operation ; PAIR }

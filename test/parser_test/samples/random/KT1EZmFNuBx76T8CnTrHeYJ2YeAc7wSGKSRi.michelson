@@ -1,0 +1,1 @@
+parameter (or (unit %default) (contract %get_price nat)); storage unit; code { UNPAIR ; IF_LEFT { PUSH string "blocked" ; FAILWITH } { PUSH string "blocked" ; FAILWITH } }

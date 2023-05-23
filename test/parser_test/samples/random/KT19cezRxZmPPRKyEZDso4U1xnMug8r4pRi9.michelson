@@ -1,0 +1,1 @@
+parameter (or (or (pair %add (nat %x) (nat %y)) (pair %divide (nat %x) (nat %y))) (or (pair %multiply (nat %x) (nat %y)) (nat %square))); storage nat; code { CAR ; IF_LEFT { IF_LEFT { UNPAIR ; ADD } { UNPAIR ; EDIV ; IF_NONE { PUSH int 17 ; FAILWITH } { CAR } } } { IF_LEFT { UNPAIR ; MUL } { DUP ; MUL } } ; NIL operation ; PAIR }

@@ -1,0 +1,1 @@
+parameter (string %set_db_access_hash); storage (big_map address string); code { UNPAIR ; SOME ; SENDER ; UPDATE ; NIL operation ; PAIR }

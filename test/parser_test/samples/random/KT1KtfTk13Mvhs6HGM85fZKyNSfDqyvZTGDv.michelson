@@ -1,0 +1,1 @@
+parameter (pair string bytes); storage int; code { UNPAIR ; UNPAIR ; DUG 2 ; SIZE ; DIG 2 ; SIZE ; DIG 2 ; ADD ; ADD ; NIL operation ; PAIR }

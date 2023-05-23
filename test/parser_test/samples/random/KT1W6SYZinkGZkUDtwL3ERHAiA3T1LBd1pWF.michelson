@@ -1,0 +1,1 @@
+parameter unit; storage address; code { CDR ; DUP ; SOURCE ; COMPARE ; NEQ ; IF { DROP ; SOURCE } {} ; NIL operation ; PAIR }

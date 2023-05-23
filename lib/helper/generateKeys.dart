@@ -12,9 +12,11 @@ enum PrefixEnum {
 
   spsk,
   sppk,
+  p2pk,
 
   edsig,
   spsig,
+  p2sig,
 }
 
 class GenerateKeys {
@@ -28,6 +30,9 @@ class GenerateKeys {
     PrefixEnum.spsk: "11a2e0c9",
     PrefixEnum.sppk: "03fee256",
     PrefixEnum.spsig: "0d7365133f",
+    //
+    PrefixEnum.p2pk: "03b28b7f",
+    PrefixEnum.p2sig: "36f02c34",
   };
 
   static String computeKeyHash(Uint8List publicKey, String hint) {
@@ -71,23 +76,11 @@ class GenerateKeys {
   }
 
   Uint8List serializeBigInt(BigInt bi) {
-    
-    return Uint8List.fromList(hex.decode(bi.toRadixString(16)));
-
-    // Uint8List array = Uint8List((bi.bitLength / 8).ceil());
-    // for (int i = 0; i < array.length; i++) {
-    //   array[i] = (bi >> (i * 8)).toUnsigned(8).toInt();
-    // }
-    // return array;
+    return Uint8List.fromList(
+        hex.decode(bi.toRadixString(16).padLeft(64, '0')));
   }
 
   BigInt deserializeBigInt(Uint8List array) {
     return BigInt.parse(hex.encode(array));
-    // var bi = BigInt.zero;
-    // for (var byte in array.reversed) {
-    //   bi <<= 8;
-    //   bi |= BigInt.from(byte);
-    // }
-    // return bi;
   }
 }

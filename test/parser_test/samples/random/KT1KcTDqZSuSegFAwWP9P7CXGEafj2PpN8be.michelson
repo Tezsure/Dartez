@@ -1,0 +1,1 @@
+parameter (or (pair %setPairList (list string) (list string)) (pair %setPairPair (pair string string) (pair string string))); storage (pair (pair %pair1 (list string) (list string)) (pair %pair2 (pair string string) (pair string string))); code { UNPAIR ; IF_LEFT { SWAP ; CDR ; SWAP ; PAIR } { SWAP ; CAR ; PAIR } ; NIL operation ; PAIR }

@@ -1,0 +1,1 @@
+parameter (string %add_line); storage (pair (nat %counter) (big_map %text nat string)); code { UNPAIR ; PUSH mutez 0 ; AMOUNT ; COMPARE ; EQ ; IF {} { PUSH string "The operation does not need tez transfers" ; FAILWITH } ; SWAP ; DUP ; DUG 2 ; DUP ; CDR ; DIG 2 ; SOME ; DIG 3 ; CAR ; UPDATE ; UPDATE 2 ; DUP ; CAR ; PUSH nat 1 ; ADD ; UPDATE 1 ; NIL operation ; PAIR }

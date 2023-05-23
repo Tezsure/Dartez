@@ -1,0 +1,1 @@
+parameter int; storage (pair (int %last_completed_migration) (address %owner)); code { DUP ; CDR ; DUP ; CDR ; SENDER ; COMPARE ; NEQ ; IF { SWAP ; DROP } { CDR ; SWAP ; CAR ; PAIR } ; NIL operation ; PAIR }

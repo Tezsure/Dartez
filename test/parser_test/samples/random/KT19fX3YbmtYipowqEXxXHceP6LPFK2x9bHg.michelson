@@ -1,0 +1,1 @@
+parameter (or (string %delete) (pair %record (string %hash) (string %id))); storage (big_map string string); code { UNPAIR ; IF_LEFT { PUSH bool False ; DUP 3 ; DUP 3 ; MEM ; COMPARE ; EQ ; IF { PUSH string "Package-id is not known!" ; FAILWITH } {} ; NONE string ; SWAP ; UPDATE ; NIL operation ; PAIR } { DUP ; DUG 2 ; CAR ; SOME ; DIG 2 ; CDR ; UPDATE ; NIL operation ; PAIR } }

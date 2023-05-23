@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"ticket","args":[{"prim":"bytes"}]}]},{"prim":"storage","args":[{"prim":"unit"}]},{"prim":"code","args":[[{"prim":"DROP"},{"prim":"PUSH","args":[{"prim":"unit"},{"prim":"Unit"}]},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

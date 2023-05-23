@@ -1,0 +1,1 @@
+parameter (unit %increment); storage (pair (address %admin) (nat %counter)); code { CDR ; DUP ; CAR ; SENDER ; COMPARE ; EQ ; IF {} { PUSH string "NOT_ADMIN" ; FAILWITH } ; DUP ; CDR ; PUSH nat 1 ; ADD ; UPDATE 2 ; NIL operation ; PAIR }

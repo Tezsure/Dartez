@@ -1,0 +1,1 @@
+parameter (list %setListString string); storage (pair (list %list1 string) (list %list2 string)); code { UNPAIR ; SWAP ; CAR ; PAIR ; NIL operation ; PAIR }

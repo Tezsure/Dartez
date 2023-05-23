@@ -1,0 +1,1 @@
+parameter (or (nat %resultFA12) (bool %resultFA2)); storage (pair (nat %fa12) (bool %fa2)); code { UNPAIR ; IF_LEFT { UPDATE 1 } { UPDATE 2 } ; NIL operation ; PAIR }

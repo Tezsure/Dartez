@@ -4,20 +4,30 @@ import 'package:dartez/helper/http_helper.dart';
 
 class OperationHelper {
   /// Get operation status
-  Future<String?> getOperationStatus(String server, String oprationHash) async {
-    while (true) {
-      var status = await _getStatus(server, oprationHash);
-      if (status != "Pending") {
-        return status;
+  Future<String?> getOperationStatus(String server, String operationHash,
+      {int numberOfRetries = 5,
+      String blockHash = "head",
+      int waitSec = 2}) async {
+    for (var i = 0; i < numberOfRetries; i++) {
+      try {
+        var status = await _getStatus(server, operationHash, blockHash);
+        if (status != "Pending") {
+          return status;
+        }
+      } catch (e) {
+        throw Exception("An error occurred while getting operation status: $e");
       }
-      await Future.delayed(Duration(seconds: 5));
+
+      await Future.delayed(Duration(seconds: waitSec));
     }
+
+    throw Exception("Operation status not found");
   }
 
   /// Get operation status
-  Future<String?> _getStatus(String server, String opHash) async {
-    var block = await getBlock(server);
-    var operations = await (getOperations(server, block));
+  Future<String?> _getStatus(
+      String server, String opHash, String blockHash) async {
+    var operations = await (getOperations(server, blockHash));
     var operation =
         operations!.where((element) => element['hash'] == opHash).toList();
     if (operation.isEmpty) {
@@ -29,17 +39,17 @@ class OperationHelper {
     }
   }
 
-  /// Get block
-  Future<String> getBlock(String server) async {
-    var response =
-        await HttpHelper.performGetRequest(server, "chains/main/blocks");
-    return response[0][0].toString();
-  }
-
   /// Get operations from block
   Future<List<dynamic>?> getOperations(String server, String block) async {
     var response = await HttpHelper.performGetRequest(
         server, "chains/main/blocks/$block/operations/3");
     return response;
+  }
+
+  /// Get block
+  Future<String> getBlock(String server) async {
+    var response =
+        await HttpHelper.performGetRequest(server, "chains/main/blocks");
+    return response[0][0].toString();
   }
 }

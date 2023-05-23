@@ -1,0 +1,1 @@
+parameter unit; storage (pair (pair (pair (address %admin) (string %fa2)) (pair (int %max_mint) (int %max_supply))) (pair (pair (big_map %metadata string bytes) (big_map %mint_meta address nat)) (pair (int %num_minted) (int %token_id)))); code { CDR ; NIL operation ; PAIR }

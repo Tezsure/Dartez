@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"or","args":[{"prim":"int","annots":["%increment"]},{"prim":"int","annots":["%decrement"]}]}]},{"prim":"storage","args":[{"prim":"int"}]},{"prim":"code","args":[[{"prim":"UNPAIR"},{"prim":"IF_LEFT","args":[[{"prim":"ADD"}],[{"prim":"SWAP"},{"prim":"SUB"}]]},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

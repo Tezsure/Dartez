@@ -1,0 +1,1 @@
+parameter (pair (address %address) (pair (nat %level) (nat %result))); storage (pair (address %address) (pair (nat %level) (nat %result))); code { CAR ; NIL operation ; PAIR }

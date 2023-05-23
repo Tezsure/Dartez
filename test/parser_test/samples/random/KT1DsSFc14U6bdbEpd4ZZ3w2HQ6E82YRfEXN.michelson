@@ -1,0 +1,1 @@
+parameter (unit %buy_nft); storage (list address); code { CDR ; NIL operation ; PUSH address "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9" ; CONTRACT %collect (pair nat nat) ; IF_NONE { PUSH int 12 ; FAILWITH } {} ; PUSH mutez 0 ; PUSH (pair nat nat) (Pair 1 161619) ; TRANSFER_TOKENS ; CONS ; PAIR }

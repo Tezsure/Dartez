@@ -1,6 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:sodium_libs/sodium_libs_sumo.dart';
+
 abstract class SodiumUtilsBase {
+  SodiumSumo? sodium;
 
   Future<void> init();
 

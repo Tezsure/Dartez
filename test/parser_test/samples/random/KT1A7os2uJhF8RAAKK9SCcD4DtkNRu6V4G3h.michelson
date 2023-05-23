@@ -1,0 +1,1 @@
+parameter string; storage (big_map string (pair timestamp address)); code { UNPAIR ; SWAP ; DUP ; DUG 2 ; SWAP ; DUP ; DUG 2 ; GET ; IF_NONE { NOW ; DIG 2 ; SENDER ; DIG 2 ; PAIR ; DIG 2 ; SWAP ; SOME ; SWAP ; UPDATE ; NIL operation ; PAIR } { DROP 3 ; PUSH string "Record hash already written" ; FAILWITH } }
