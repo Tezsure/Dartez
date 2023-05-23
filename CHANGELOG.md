@@ -1,6 +1,6 @@
 # [2.0.0]
 
-- Conducted comprehensive security and performance audit for the package, addressing identified vulnerabilities, improving code quality, and optimizing performance.
+- Conducted comprehensive security and performance audit for the package, addressing identified vulnerabilities, improving code quality, and optimising performance.
 
 # [1.1.0]
 
