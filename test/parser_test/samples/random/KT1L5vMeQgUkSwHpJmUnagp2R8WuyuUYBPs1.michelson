@@ -1,0 +1,1 @@
+parameter (int %repeat); storage int; code { CAR ; NIL operation ; PAIR }

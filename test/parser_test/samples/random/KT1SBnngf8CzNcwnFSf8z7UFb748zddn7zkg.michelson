@@ -1,0 +1,1 @@
+parameter (pair %update_the_value (pair %from_currency address nat) (string %to_currency)); storage nat; code { CAR ; PUSH address "KT1CMeYYCm491azVDw6S6tJW6nf7LtXkHqrk" ; SWAP ; VIEW "fa2_price_fiat" nat ; IF_NONE { PUSH string "Invalid view" ; FAILWITH } {} ; NIL operation ; PAIR }

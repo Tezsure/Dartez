@@ -1,0 +1,1 @@
+parameter (pair %run (address %owner) (pair (address %target) (nat %token_id))); storage address; code { UNPAIR ; PUSH nat 0 ; DUP 3 ; DIG 2 ; DUP ; GET 4 ; SWAP ; DUP ; GET 3 ; SWAP ; CAR ; PAIR 3 ; VIEW "get_token_balance" nat ; IF_NONE { PUSH int 16 ; FAILWITH } {} ; COMPARE ; GT ; IF {} { PUSH string "DOES_NOT_HOLD_ITEM" ; FAILWITH } ; NIL operation ; PAIR }

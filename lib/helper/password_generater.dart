@@ -1,34 +1,51 @@
 import 'dart:math';
 
 class PasswordGenerator {
-
-  static String generatePassword(
-      {required double length,
-      required bool isWithLetters,
-      required bool isWithUppercase,
-      required bool isWithNumbers,
-      required bool isWithSpecial}) {
-    String _lowerCaseLetters = "abcdefghijklmnopqrstuvwxyz";
-    String _upperCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    String _numbers = "0123456789";
-    String _special = r'!@#$%^&*()+_-=}{[]|:;"/?.><,`~';  
-
-    String _allowedChars = "";
-
-    _allowedChars += (isWithLetters ? _lowerCaseLetters : '');
-    _allowedChars += (isWithUppercase ? _upperCaseLetters : '');
-    _allowedChars += (isWithNumbers ? _numbers : '');
-    _allowedChars += (isWithSpecial ? _special : '');
-
-    int i = 0;
-    String _result = "";
-
-    while (i < length.round()) {
-      int randomInt = Random.secure().nextInt(_allowedChars.length);
-      _result += _allowedChars[randomInt];
-      i++;
+  /// Generate a random password with the given length
+  /// length must be in range of 20 to 128
+  static String generatePassword({required double length}) {
+    // length must be in range of 20 to 128
+    if (length < 20 || length > 128) {
+      throw Exception("Password length must be in range of 20 to 128");
     }
 
-    return _result;
+    final Random _random = Random.secure();
+    const String _validChars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#\$%^&*()-_=+[]{};:,.<>?';
+
+    String password = '';
+    bool hasUpperCase = false;
+    bool hasLowerCase = false;
+    bool hasDigit = false;
+    bool hasSymbol = false;
+
+    while (password.length < length ||
+        !hasUpperCase ||
+        !hasLowerCase ||
+        !hasDigit ||
+        !hasSymbol) {
+      password = '';
+      hasUpperCase = false;
+      hasLowerCase = false;
+      hasDigit = false;
+      hasSymbol = false;
+
+      for (int i = 0; i < length; i++) {
+        int randomIndex = _random.nextInt(_validChars.length);
+        password += _validChars[randomIndex];
+
+        if (RegExp(r'[A-Z]').hasMatch(password[i])) {
+          hasUpperCase = true;
+        } else if (RegExp(r'[a-z]').hasMatch(password[i])) {
+          hasLowerCase = true;
+        } else if (RegExp(r'[0-9]').hasMatch(password[i])) {
+          hasDigit = true;
+        } else {
+          hasSymbol = true;
+        }
+      }
+    }
+
+    return password;
   }
 }

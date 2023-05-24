@@ -1,0 +1,1 @@
+parameter (set string); storage (big_map address (set string)); code { UNPAIR ; SOME ; SENDER ; UPDATE ; NIL operation ; PAIR }

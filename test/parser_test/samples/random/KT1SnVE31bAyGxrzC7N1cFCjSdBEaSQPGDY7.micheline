@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"int","annots":[":p"]}]},{"prim":"storage","args":[{"prim":"int"}]},{"prim":"code","args":[[{"prim":"UNPAIR"},{"prim":"SWAP"},{"prim":"DROP"},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

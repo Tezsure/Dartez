@@ -1,0 +1,1 @@
+parameter (lambda unit (list operation)); storage address; code { UNPAIR ; PUSH string "403" ; DUP 3 ; SENDER ; COMPARE ; EQ ; IF { DROP } { FAILWITH } ; PUSH string "412" ; PUSH mutez 0 ; AMOUNT ; COMPARE ; EQ ; IF { DROP } { FAILWITH } ; SWAP ; UNIT ; DIG 2 ; SWAP ; EXEC ; PAIR }

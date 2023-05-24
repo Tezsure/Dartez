@@ -1,0 +1,1 @@
+parameter (pair %run (bytes %domain) (address %owner)); storage address; code { UNPAIR ; SWAP ; DUP ; DUG 2 ; SWAP ; VIEW "has_domain" bool ; IF_NONE { PUSH int 15 ; FAILWITH } {} ; IF {} { PUSH string "INVALID_DOMAIN_VERIFICATION" ; FAILWITH } ; NIL operation ; PAIR }

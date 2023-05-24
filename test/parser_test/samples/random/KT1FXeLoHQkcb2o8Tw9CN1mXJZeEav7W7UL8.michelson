@@ -1,0 +1,1 @@
+parameter (or (nat %setValue) (nat %setValue1)); storage nat; code { CAR ; IF_LEFT {} { PUSH nat 2 ; SWAP ; MUL } ; NIL operation ; PAIR }

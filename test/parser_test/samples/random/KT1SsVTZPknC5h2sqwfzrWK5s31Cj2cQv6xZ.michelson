@@ -1,0 +1,1 @@
+parameter (or (map %setMapList string (list string)) (map %setMapPair string (pair string string))); storage (pair (map %map1 string (list string)) (map %map2 string (pair string string))); code { UNPAIR ; IF_LEFT { SWAP ; CDR ; SWAP ; PAIR } { SWAP ; CAR ; PAIR } ; NIL operation ; PAIR }

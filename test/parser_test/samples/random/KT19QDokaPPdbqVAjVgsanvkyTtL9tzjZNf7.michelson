@@ -1,0 +1,1 @@
+parameter unit; storage string; code { CAST (pair unit string) ; CDR ; NIL operation ; PAIR }

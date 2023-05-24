@@ -1,0 +1,1 @@
+parameter (contract %get_reserves (pair nat nat)); storage (pair (nat %tez_pool) (nat %token_pool)); code { UNPAIR ; DUP 2 ; PUSH mutez 0 ; SWAP ; TRANSFER_TOKENS ; NIL operation ; SWAP ; CONS ; PAIR }

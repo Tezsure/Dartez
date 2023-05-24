@@ -1,0 +1,1 @@
+parameter (bytes %check); storage (pair (set %hashes bytes) (bool %value)); code { UNPAIR ; SWAP ; DUP ; CAR ; DIG 2 ; MEM ; UPDATE 2 ; NIL operation ; PAIR }

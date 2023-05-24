@@ -1,0 +1,1 @@
+parameter (unit %increment); storage nat; code { CDR ; PUSH nat 1 ; ADD ; NIL operation ; PAIR }

@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"string","annots":["%addMsg"]}]},{"prim":"storage","args":[{"prim":"pair","args":[{"prim":"string","annots":["%channelName"]},{"prim":"string","annots":["%lastMsg"]}]}]},{"prim":"code","args":[[{"prim":"UNPAIR"},{"prim":"UPDATE","args":[{"int":"2"}]},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

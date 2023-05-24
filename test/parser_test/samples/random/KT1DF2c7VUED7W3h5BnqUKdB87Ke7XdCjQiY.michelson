@@ -1,0 +1,1 @@
+parameter unit; storage address; view "get_baking_reward_collector" unit address { CDR }; view "get_treasury" unit address { CDR }; view "is_paused" unit bool { DROP ; PUSH bool False }; code { CAST (pair unit address) ; CDR ; NIL operation ; PAIR }

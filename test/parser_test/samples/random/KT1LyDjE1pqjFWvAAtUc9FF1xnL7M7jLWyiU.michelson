@@ -1,0 +1,1 @@
+parameter (or (contract %get_price nat) (nat %set_price)); storage nat; code { UNPAIR ; IF_LEFT { NIL operation ; SWAP ; PUSH mutez 0 ; DUP 4 ; TRANSFER_TOKENS ; CONS } { SWAP ; DROP ; NIL operation } ; PAIR }

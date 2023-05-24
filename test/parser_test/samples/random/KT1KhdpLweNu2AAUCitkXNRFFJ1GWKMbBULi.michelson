@@ -1,0 +1,1 @@
+parameter (unit %default); storage address; code { CDR ; DUP ; CONTRACT %accept_admin unit ; IF_NONE { PUSH int 9 ; FAILWITH } {} ; NIL operation ; SWAP ; PUSH mutez 0 ; UNIT ; TRANSFER_TOKENS ; CONS ; PAIR }

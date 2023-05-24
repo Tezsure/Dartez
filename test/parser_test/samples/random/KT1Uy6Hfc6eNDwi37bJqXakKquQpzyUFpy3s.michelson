@@ -1,0 +1,1 @@
+parameter (or (nat %setValue1x) (or (pair %setValue1x2x (nat %value1x) (nat %value2x)) (nat %setValue2x))); storage (pair (nat %value1x) (nat %value2x)); code { UNPAIR ; IF_LEFT { UPDATE 1 } { IF_LEFT { DUP ; DUG 2 ; CAR ; UPDATE 1 ; SWAP ; CDR ; UPDATE 2 } { SWAP ; PUSH nat 2 ; DIG 2 ; MUL ; UPDATE 2 } } ; NIL operation ; PAIR }

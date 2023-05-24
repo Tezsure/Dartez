@@ -1,0 +1,1 @@
+parameter string; storage string; code { DUP ; CDR ; SWAP ; CAR ; SWAP ; DROP ; NIL operation ; PAIR }

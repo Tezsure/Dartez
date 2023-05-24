@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
 import 'package:dartez/chain/tezos/tezos_language_util.dart';
-import 'package:dartez/chain/tezos/tezos_message_codec.dart';
 import 'package:dartez/chain/tezos/tezos_message_utils.dart';
 import 'package:dartez/chain/tezos/tezos_node_reader.dart';
 import 'package:dartez/helper/constants.dart';
@@ -12,11 +11,13 @@ import 'package:dartez/models/key_store_model.dart';
 import 'package:dartez/models/operation_model.dart';
 import 'package:dartez/src/soft-signer/soft_signer.dart';
 import 'package:dartez/types/tezos/tezos_chain_types.dart';
-import 'package:dartez/utils/fee_estimater.dart';
+import 'package:dartez/utils/fee_estimation.dart';
 
 class TezosNodeWriter {
+  /// send a transaction operation
+  /// fee, gasLimit and storageLimit are estimated by the fee estimation service
   static Future<Map<String, Object?>> sendTransactionOperation(String server,
-      SoftSigner signer, KeyStoreModel keyStore, String to, int amount, int fee,
+      SoftSigner signer, KeyStoreModel keyStore, String to, int amount,
       {int offset = 54, required bool isKeyRevealed}) async {
     var results = await Future.wait(!isKeyRevealed
         ? [
@@ -56,8 +57,10 @@ class TezosNodeWriter {
     return sendOperation(server, operations, signer, offset, blockHead);
   }
 
+  /// send a delegation operation
+  /// fee, gasLimit and storageLimit are estimated by the fee estimation service
   static sendDelegationOperation(String server, SoftSigner signer,
-      KeyStoreModel keyStore, String delegate, int fee, offset) async {
+      KeyStoreModel keyStore, String delegate, offset) async {
     var counter = await TezosNodeReader.getCounterForAccount(
             server, keyStore.publicKeyHash) +
         1;
@@ -74,15 +77,14 @@ class TezosNodeWriter {
     return sendOperation(server, operations, signer, offset);
   }
 
+  /// send a contract origination operation
+  /// fee, gasLimit and storageLimit are estimated by the fee estimation service
   static sendContractOriginationOperation(
       String server,
       SoftSigner signer,
       KeyStoreModel keyStore,
       int amount,
       String delegate,
-      int fee,
-      int storageLimit,
-      int gasLimit,
       String code,
       String storage,
       TezosParameterFormat codeFormat,
@@ -91,30 +93,20 @@ class TezosNodeWriter {
             server, keyStore.publicKeyHash) +
         1;
     var operation = constructContractOriginationOperation(
-        keyStore,
-        amount,
-        delegate,
-        fee,
-        storageLimit,
-        gasLimit,
-        code,
-        storage,
-        codeFormat,
-        counter);
+        keyStore, amount, delegate, code, storage, codeFormat, counter);
     var operations = await appendRevealOperation(server, keyStore.publicKey,
         keyStore.publicKeyHash, counter - 1, [operation]);
     return sendOperation(server, operations, signer, offset);
   }
 
+  /// send a contract invocation operation
+  /// fee, gasLimit and storageLimit are estimated by the fee estimation service
   static Future<Map<String, dynamic>> sendContractInvocationOperation(
     String server,
     SoftSigner signer,
     KeyStoreModel keyStore,
     List<String> contract,
     List<int> amount,
-    int fee,
-    int storageLimit,
-    int gasLimit,
     List<String> entrypoint,
     List<String> parameters, {
     var parameterFormat = TezosParameterFormat.Michelson,
@@ -135,9 +127,6 @@ class TezosNodeWriter {
           counter + i,
           contract[i],
           amount[i],
-          fee,
-          storageLimit,
-          gasLimit,
           entrypoint[i],
           parameters[i],
           parameterFormat is List ? parameterFormat[i] : parameterFormat,
@@ -160,8 +149,10 @@ class TezosNodeWriter {
     return await sendOperation(server, [activation], signer, 54);
   }
 
+  /// send key reveal operation
+  /// fee, gasLimit and storageLimit are estimated by the fee estimation service
   static sendKeyRevealOperation(
-      String server, signer, KeyStoreModel keyStore, fee, offset) async {
+      String server, signer, KeyStoreModel keyStore, offset) async {
     var counter = (await TezosNodeReader.getCounterForAccount(
             server, keyStore.publicKeyHash)) +
         1;
@@ -182,9 +173,6 @@ class TezosNodeWriter {
       int counter,
       String contract,
       int amount,
-      int fee,
-      int storageLimit,
-      int gasLimit,
       entrypoint,
       String parameters,
       TezosParameterFormat parameterFormat) {
@@ -198,7 +186,8 @@ class TezosNodeWriter {
     if (parameters != '') {
       if (parameterFormat == TezosParameterFormat.Michelson) {
         var michelineParams =
-            TezosLanguageUtil.translateMichelsonToMicheline(parameters)!;
+            TezosLanguageUtil.translateMichelsonExpressionToMicheline(
+                parameters)!;
         transaction.parameters = {
           'entrypoint': entrypoint.isEmpty ? 'default' : entrypoint,
           'value': jsonDecode(michelineParams)
@@ -209,8 +198,9 @@ class TezosNodeWriter {
           'value': jsonDecode(parameters)
         };
       } else if (parameterFormat == TezosParameterFormat.MichelsonLambda) {
-        var michelineLambda = TezosLanguageUtil.translateMichelsonToMicheline(
-            'code $parameters')!;
+        var michelineLambda =
+            TezosLanguageUtil.translateMichelsonExpressionToMicheline(
+                'code $parameters')!;
         transaction.parameters = {
           'entrypoint': entrypoint.isEmpty ? 'default' : entrypoint,
           'value': jsonDecode(michelineLambda)
@@ -252,7 +242,8 @@ class TezosNodeWriter {
         operations[index].counter = c;
       }
 
-      return <OperationModel>[revealOp, ...operations];
+      return prepareOperation(
+          server, <OperationModel>[revealOp, ...operations]);
     }
 
     return prepareOperation(server, operations);
@@ -260,14 +251,11 @@ class TezosNodeWriter {
 
   static Future<List<OperationModel>> prepareOperation(
       String server, List<OperationModel> operations) async {
-    var feeEstimater = FeeEstimater(server, operations);
-    var estimate = await feeEstimater.getEstimateOperationGroup();
+    var feeEstimation = FeeEstimation(server, operations);
+    var estimate = await feeEstimation.estimateFees();
     operations[0].fee = estimate['estimatedFee'].toString();
-    for (var i = 0; i < operations.length; i++) {
-      operations[i].gasLimit = estimate['operationResources'][i]['gas'];
-      operations[i].storageLimit =
-          estimate['operationResources'][i]['storageCost'];
-    }
+    operations[0].gasLimit = estimate['gas'];
+    operations[0].storageLimit = estimate['storageCost'];
     return operations;
   }
 
@@ -277,7 +265,8 @@ class TezosNodeWriter {
     var _blockHead =
         blockHead ?? await TezosNodeReader.getBlockAtOffset(server, offset);
     var blockHash = _blockHead['hash'].toString().substring(0, 51);
-    var forgedOperationGroup = forgeOperations(blockHash, operations);
+    var forgedOperationGroup =
+        await forgeOperations(server, blockHash, operations);
     var opSignature = signer.signOperation(Uint8List.fromList(hex.decode(
         TezosConstants.OperationGroupWatermark + forgedOperationGroup)));
     var signedOpGroup = Uint8List.fromList(
@@ -302,13 +291,17 @@ class TezosNodeWriter {
     return {'appliedOp': appliedOp[0], 'operationGroupID': injectedOperation};
   }
 
-  static String forgeOperations(
-      String branch, List<OperationModel> operations) {
-    String encoded = TezosMessageUtils.writeBranch(branch);
-    for (var i = 0; i < operations.length; i++) {
-      encoded += TezosMessageCodec.encodeOperation(operations[i]);
-    }
-    return encoded;
+  static Future<String> forgeOperations(
+      String server, String branch, List<OperationModel> operations) async {
+    var payload = {
+      'branch': branch,
+      'contents': operations,
+    };
+
+    var response = await HttpHelper.performPostRequest(
+        server, 'chains/main/blocks/head/helpers/forge/operations', payload);
+
+    return response.replaceAll('"', "").trim();
   }
 
   static preapplyOperation(String server, String branch, protocol,
@@ -358,7 +351,7 @@ class TezosNodeWriter {
             .replaceFirst('/\n/', "'");
         if (hash.length == 51 && hash[0] == 'o') {
         } else {
-          print(
+          throw Exception(
               "failed to parse errors: '$err' from '${json.toString()}'\n, PLEASE report this to the maintainers");
         }
       }
@@ -393,9 +386,6 @@ class TezosNodeWriter {
       KeyStoreModel keyStore,
       int amount,
       String delegate,
-      int fee,
-      int storageLimit,
-      int gasLimit,
       String code,
       String storage,
       TezosParameterFormat codeFormat,
@@ -403,10 +393,10 @@ class TezosNodeWriter {
     var parsedCode;
     var parsedStorage;
     if (codeFormat == TezosParameterFormat.Michelson) {
-      parsedCode =
-          jsonDecode(TezosLanguageUtil.translateMichelsonToMicheline(code)!);
-      parsedStorage =
-          jsonDecode(TezosLanguageUtil.translateMichelsonToMicheline(storage)!);
+      parsedCode = jsonDecode(
+          TezosLanguageUtil.translateMichelsonScriptToMicheline(code)!);
+      parsedStorage = jsonDecode(
+          TezosLanguageUtil.translateMichelsonExpressionToMicheline(storage)!);
     } else if (codeFormat == TezosParameterFormat.Micheline) {
       parsedCode = jsonDecode(code);
       parsedStorage = jsonDecode(storage);

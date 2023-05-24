@@ -1,0 +1,1 @@
+parameter (pair %stamp (string %hash) (address %owner)); storage (map string (pair address timestamp)); code { UNPAIR ; PUSH bool False ; DUP 3 ; DUP 3 ; CAR ; MEM ; COMPARE ; EQ ; IF {} { PUSH string "Hash already stamped." ; FAILWITH } ; SWAP ; NOW ; DUP 3 ; CDR ; PAIR ; SOME ; DIG 2 ; CAR ; UPDATE ; NIL operation ; PAIR }

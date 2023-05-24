@@ -1,0 +1,1 @@
+parameter (or (unit %deposit) (address %sendToWinner)); storage address; code { UNPAIR ; IF_LEFT { DROP ; NIL operation } { SWAP ; DUP ; DUG 2 ; PACK ; SENDER ; PACK ; COMPARE ; EQ ; IF {} { PUSH string "No Permission!" ; FAILWITH } ; CONTRACT unit ; IF_NONE { PUSH int 14 ; FAILWITH } {} ; NIL operation ; SWAP ; BALANCE ; UNIT ; TRANSFER_TOKENS ; CONS } ; PAIR }

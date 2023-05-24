@@ -1,0 +1,1 @@
+parameter (pair %reserves nat nat); storage (pair (nat %ctez) (nat %tez)); code { UNPAIR ; AMOUNT ; PUSH mutez 0 ; COMPARE ; EQ ; IF {} { AMOUNT ; FAILWITH } ; DUP ; DUG 2 ; CAR ; UPDATE 1 ; SWAP ; CDR ; UPDATE 2 ; NIL operation ; PAIR }

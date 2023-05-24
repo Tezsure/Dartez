@@ -1,0 +1,1 @@
+parameter (unit %increment); storage (pair (map %callers address bool) (nat %number)); code { CDR ; DUP ; CAR ; SENDER ; MEM ; IF { PUSH string "Sender has already incremented. Each Address can only increment once" ; FAILWITH } {} ; DUP ; CAR ; PUSH (option bool) (Some True) ; SENDER ; UPDATE ; UPDATE 1 ; DUP ; CDR ; PUSH nat 1 ; ADD ; UPDATE 2 ; NIL operation ; PAIR }

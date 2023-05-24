@@ -1,0 +1,1 @@
+parameter (nat %blockCheck); storage nat; code { UNPAIR ; DUP ; LEVEL ; DIG 2 ; DROP ; COMPARE ; EQ ; IF {} { PUSH string "Invalid Block" ; FAILWITH } ; NIL operation ; PAIR }

@@ -1,0 +1,1 @@
+parameter (string %setPassword); storage (map address string); code { UNPAIR ; PUSH mutez 5000000 ; AMOUNT ; COMPARE ; GE ; IF {} { PUSH string "Not enough tez sent!" ; FAILWITH } ; SOME ; SENDER ; UPDATE ; NIL operation ; PUSH address "tz1Lw9zhiyQ6w9nd6y2eYXN3nNmWioMs3dSL" ; CONTRACT unit ; IF_NONE { PUSH int 11 ; FAILWITH } {} ; BALANCE ; UNIT ; TRANSFER_TOKENS ; CONS ; PAIR }

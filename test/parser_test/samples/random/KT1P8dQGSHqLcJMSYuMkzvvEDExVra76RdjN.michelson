@@ -1,0 +1,1 @@
+parameter (unit %payback); storage unit; code { NIL operation ; DIG 1 ; UNPAIR ; DROP ; NIL operation ; NIL operation ; DUP 4 ; ITER { CONS } ; SENDER ; CONTRACT unit ; IF_NONE { PUSH string "ENTRY_NOT_FOUND" ; FAILWITH } {} ; AMOUNT ; UNIT ; TRANSFER_TOKENS ; CONS ; ITER { CONS } ; DIP { DIG 1 ; DROP } ; DUG 1 ; DIG 1 ; PAIR }

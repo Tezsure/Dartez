@@ -1,0 +1,1 @@
+parameter (nat %flashbake); storage int; code { CAR ; PUSH int 0 ; SWAP ; DUP ; DUP ; PUSH nat 0 ; COMPARE ; LT ; LOOP { DIG 2 ; PUSH int 1 ; ADD ; DUG 2 ; PUSH nat 1 ; SWAP ; SUB ; ISNAT ; IF_NONE { PUSH int 19 ; FAILWITH } {} ; DUP ; PUSH nat 0 ; COMPARE ; LT } ; DROP 2 ; NIL operation ; PAIR }

@@ -1,0 +1,1 @@
+parameter (pair (nat %balance) (pair %request (address %owner) (nat %token_id))); storage nat; code { CAR ; CAR ; NIL operation ; PAIR }

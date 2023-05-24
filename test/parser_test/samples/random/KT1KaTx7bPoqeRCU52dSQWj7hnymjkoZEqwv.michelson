@@ -1,0 +1,1 @@
+parameter (unit %default); storage unit; view "get_min_out" nat nat { CAR ; PUSH nat 10000 ; PUSH nat 9984 ; DIG 2 ; MUL ; EDIV ; IF_NONE { PUSH int 150 ; FAILWITH } { CAR } }; code { CDR ; NIL operation ; PAIR }

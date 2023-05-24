@@ -1,0 +1,1 @@
+parameter (string %addMsg); storage (pair (string %channelName) (string %lastMsg)); code { UNPAIR ; UPDATE 2 ; NIL operation ; PAIR }

@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"unit"}]},{"prim":"storage","args":[{"prim":"pair","args":[{"prim":"nat"},{"prim":"big_map","args":[{"prim":"string"},{"prim":"bytes"}],"annots":["%metadata"]}]}]},{"prim":"code","args":[[{"prim":"PUSH","args":[{"prim":"nat"},{"int":"42"}]},{"prim":"FAILWITH"}]]}]
