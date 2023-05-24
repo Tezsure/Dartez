@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"bytes","annots":["%event"]}]},{"prim":"storage","args":[{"prim":"big_map","args":[{"prim":"string"},{"prim":"bytes"}]}]},{"prim":"code","args":[[{"prim":"UNPAIR"},{"prim":"DROP"},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

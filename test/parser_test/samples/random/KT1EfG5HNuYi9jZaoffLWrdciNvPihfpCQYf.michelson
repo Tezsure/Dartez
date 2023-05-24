@@ -1,0 +1,1 @@
+parameter (pair (address %fa2) (nat %tid)); storage unit; code { CAR ; DUP ; CAR ; SWAP ; CDR ; VIEW "get_token_owner" address ; IF_NONE { PUSH string "option is None" ; FAILWITH } {} ; UNIT ; NIL operation ; DIG 2 ; CONTRACT unit ; IF_NONE { PUSH string "bad address for get_contract" ; FAILWITH } {} ; AMOUNT ; UNIT ; PAIR 3 ; UNPAIR 3 ; TRANSFER_TOKENS ; CONS ; PAIR }

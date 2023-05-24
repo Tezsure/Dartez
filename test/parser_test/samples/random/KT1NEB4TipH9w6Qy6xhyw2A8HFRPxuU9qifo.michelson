@@ -1,0 +1,1 @@
+parameter unit; storage unit; code { CDR ; PUSH mutez 0 ; AMOUNT ; COMPARE ; NEQ ; IF { DROP ; PUSH string "This contract does not accept tez" ; FAILWITH } { NIL operation ; PAIR } }

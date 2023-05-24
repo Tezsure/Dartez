@@ -1,0 +1,1 @@
+parameter (string %pay); storage address; code { CDR ; AMOUNT ; SWAP ; DUP ; DUG 2 ; PUSH string "ERROR: invalid payee address" ; SWAP ; CONTRACT unit ; IF_NONE { FAILWITH } { SWAP ; DROP } ; SWAP ; UNIT ; TRANSFER_TOKENS ; SWAP ; NIL operation ; DIG 2 ; CONS ; PAIR }

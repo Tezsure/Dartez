@@ -1,0 +1,1 @@
+parameter (bytes %event); storage (big_map string bytes); code { UNPAIR ; DROP ; NIL operation ; PAIR }

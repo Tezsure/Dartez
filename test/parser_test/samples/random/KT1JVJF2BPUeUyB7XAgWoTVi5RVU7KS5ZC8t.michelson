@@ -1,0 +1,1 @@
+parameter (unit %default); storage unit; code { CAST (pair unit unit) ; CDR ; PUSH mutez 0 ; AMOUNT ; COMPARE ; NEQ ; IF { PUSH mutez 0 ; AMOUNT ; COMPARE ; EQ } { PUSH bool False } ; IF {} { PUSH string "WrongCondition: (sp.amount != sp.tez(0)) & (sp.amount == sp.tez(0))" ; FAILWITH } ; NIL operation ; PAIR }

@@ -4,16 +4,20 @@
 
 // NOTE: please get the dartez package under pubspec.yaml before running the project
 
+// ignore_for_file: avoid_print, library_private_types_in_public_api, unused_local_variable
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:dartez/dartez.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
   _MyAppState createState() => _MyAppState();
 }
@@ -36,7 +40,7 @@ class _MyAppState extends State<MyApp> {
     //mnemonic ===> 24 random words, [If strength parameter is changed the words length differs.]
 
     // Generate keys from mnemonic.
-    List<String> keys = await Dartez.getKeysFromMnemonic(
+    KeyStoreModel keys = Dartez.getKeysFromMnemonic(
       mnemonic: mnemonic,
     );
     print("keys ===> $keys");
@@ -44,9 +48,9 @@ class _MyAppState extends State<MyApp> {
     //Accessing: private key ===> keys[0] | public key ===> keys[1] | public Key Hash ===> identity[2] all of type string
 
     // Generate keys from mnemonics and passphrase.
-    List<String> identity = await Dartez.getKeysFromMnemonicAndPassphrase(
+    KeyStoreModel identity = Dartez.getKeysFromMnemonic(
       mnemonic: "cannon rabbit ..... plunge winter",
-      passphrase: "",
+      passphrase: "hIm*548j^faI",
     );
     print("identity ===> $identity");
     // identityWithMnemonic ===> [privateKey, publicKey, publicKeyHash]
@@ -60,8 +64,7 @@ class _MyAppState extends State<MyApp> {
       publicKey: 'edpktt.....U1gYJu2',
     );
 
-    var signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    var signer = Dartez.createSigner(keyStore.secretKey!);
 
     var result = await Dartez.sendKeyRevealOperation(server, signer, keyStore);
 
@@ -94,17 +97,13 @@ class _MyAppState extends State<MyApp> {
     );
 
     var unloackedIdentityKeys = await Dartez.unlockFundraiserIdentity(
-        email: faucetKeyStore.email ?? '',
         passphrase: faucetKeyStore.password ?? '',
         mnemonic: faucetKeyStore.seed.join(' '));
 
-    faucetKeyStore
-      ..publicKey = unloackedIdentityKeys[1]
-      ..secretKey = unloackedIdentityKeys[0]
-      ..publicKeyHash = unloackedIdentityKeys[2];
+    faucetKeyStore = unloackedIdentityKeys;
 
-    var activationOperationSigner = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(faucetKeyStore.secretKey, 'edsk'));
+    var activationOperationSigner =
+        Dartez.createSigner(faucetKeyStore.secretKey!);
 
     var activationOperationResult =
         await Dartez.sendIdentityActivationOperation(
@@ -116,9 +115,8 @@ class _MyAppState extends State<MyApp> {
     print('${activationOperationResult['operationGroupID']}');
 
     // Unlock fundraiser identity.
-    List<String> identityFundraiser = await Dartez.unlockFundraiserIdentity(
+    KeyStoreModel identityFundraiser = await Dartez.unlockFundraiserIdentity(
       mnemonic: "cannon rabbit ..... plunge winter",
-      email: "lkbpoife.tobqgidu@tezos.example.org",
       passphrase: "5tj...imq",
     );
     print("identityFundraiser ===> $identityFundraiser");
@@ -128,18 +126,13 @@ class _MyAppState extends State<MyApp> {
     // restoreIdentityFromDerivationPath
     var derivationPath = 'your derivation path';
 
-    List<String> listkeyStore = await Dartez.restoreIdentityFromDerivationPath(
-        derivationPath, mnemonic);                   
+    KeyStoreModel listkeyStore = await Dartez.restoreIdentityFromDerivationPath(
+        derivationPath, mnemonic);
 
-    /* [edskRzNDm2dpqe2yd5zYAw1vmjr8sAwMubfcXajxdCNNr4Ud39BoppeqMAzoCPmb14mzfXRhjtydQjCbqU2VzWrsq6JP4D9GVb,
-        edpkvASxrq16v5Awxpz4XPTA2d6QFaCL8expPrPNcVgVbWxT84Kdw2,
-        tz1hhkSbaocSWm3wawZUuUdX57L3maSH16Pv] */
 
     // getKeysFromSecretKey
     var restoredKeys = Dartez.getKeysFromSecretKey("eds.....vdC");
     print("Restored account keys ===> $restoredKeys");
-    // restoredKeys ===> [privateKey, publicKey, publicKeyHash]
-    // Accessing: private key ===> restoredKeys[0] | public key ===> restoredKeys[1] | public Key Hash ===> restoredKeys[2] all of type string.
 
     // Delegate an Account.
     server = '';
@@ -150,22 +143,20 @@ class _MyAppState extends State<MyApp> {
       publicKeyHash: 'tz1.....hxy',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
 
     result = await Dartez.sendDelegationOperation(
       server,
       signer,
       keyStore,
       'tz1.....Lnc',
-      10000,
     );
 
     print("Applied operation ===> $result['appliedOp']");
     print("Operation groupID ===> $result['operationGroupID']");
 
     // Sign Operation Group.
-    List<String> signOperationGroup = await Dartez.signOperationGroup(
+    List<String> signOperationGroup = Dartez.signOperationGroup(
         privateKey: "edskRdV..... .XezixvdA",
         forgedOperation: "713cb068fe.... .b940ee");
     print(signOperationGroup);
@@ -181,8 +172,7 @@ class _MyAppState extends State<MyApp> {
       publicKeyHash: 'tz1.....hxy',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
 
     result = await Dartez.sendTransactionOperation(
       server,
@@ -190,7 +180,6 @@ class _MyAppState extends State<MyApp> {
       keyStore,
       'tz1.....Lnc',
       500000,
-      1500,
     );
 
     print("Applied operation ===> $result['appliedOp']");
@@ -215,8 +204,7 @@ class _MyAppState extends State<MyApp> {
       publicKeyHash: 'tz1.....hxy',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
 
     result = await Dartez.sendContractOriginationOperation(
       server,
@@ -224,9 +212,6 @@ class _MyAppState extends State<MyApp> {
       keyStore,
       0,
       '',
-      100000,
-      1000,
-      100000,
       contract,
       storage,
       codeFormat: TezosParameterFormat.Michelson,
@@ -243,22 +228,12 @@ class _MyAppState extends State<MyApp> {
       publicKeyHash: 'tz1.....hxy',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
 
     var contractAddress = ['KT1.....xMY'];
 
-    var resultInvoke = await Dartez.sendContractInvocationOperation(
-        server,
-        signer,
-        keyStore,
-        contractAddress,
-        [10000],
-        100000,
-        1000,
-        100000,
-        [''],
-        ["Cryptonomicon"],
+    var resultInvoke = await Dartez.sendContractInvocationOperation(server,
+        signer, keyStore, contractAddress, [10000], [''], ["Cryptonomicon"],
         codeFormat: TezosParameterFormat.Michelson);
 
     print("Operation groupID ===> $result['operationGroupID']");
@@ -286,8 +261,7 @@ class _MyAppState extends State<MyApp> {
       publicKeyHash: 'tz1.....hxy',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
 
     result = await Dartez.sendContractOriginationOperation(
       server,
@@ -295,9 +269,6 @@ class _MyAppState extends State<MyApp> {
       keyStore,
       0,
       '',
-      100000,
-      1000,
-      100000,
       contract,
       storage,
       codeFormat: TezosParameterFormat.Michelson,
@@ -321,13 +292,11 @@ class _MyAppState extends State<MyApp> {
       publicKey: 'edpktt.....U1gYJu2',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
     var to = "tz1....VLdc";
     var amount = (12.5 * 1000000).ceil(); // sending 12.5 tez
-    var fee = 1500;
     var transactionOperation = await Dartez.sendTransactionOperation(
-        server, signer, keyStore, to, amount, fee);
+        server, signer, keyStore, to, amount);
 
     // preapplyContractInvocationOperation
     server = '';
@@ -338,8 +307,7 @@ class _MyAppState extends State<MyApp> {
       publicKey: 'edpktt.....U1gYJu2',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
 
     var contracts = ["KT1...fgH"];
 
@@ -347,16 +315,7 @@ class _MyAppState extends State<MyApp> {
 
     Map<String, dynamic> opPair =
         await Dartez.preapplyContractInvocationOperation(
-            server,
-            signer,
-            keyStore,
-            contracts,
-            [0],
-            120000,
-            1000,
-            100000,
-            ['transfer'],
-            parameters);
+            server, signer, keyStore, contracts, [0], ['transfer'], parameters);
 
     // injectOperation
     server = '';
@@ -367,24 +326,14 @@ class _MyAppState extends State<MyApp> {
       publicKey: 'edpktt.....U1gYJu2',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
 
     contracts = ["KT1...fgH"];
 
     parameters = ["parameters"];
 
     opPair = await Dartez.preapplyContractInvocationOperation(
-        server,
-        signer,
-        keyStore,
-        contracts,
-        [0],
-        120000,
-        1000,
-        100000,
-        ['transfer'],
-        parameters);
+        server, signer, keyStore, contracts, [0], ['transfer'], parameters);
 
     var opHash = await Dartez.injectOperation(server, opPair);
 
@@ -403,27 +352,17 @@ class _MyAppState extends State<MyApp> {
       publicKey: 'edpktt.....U1gYJu2',
     );
 
-    signer = await Dartez.createSigner(
-        Dartez.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+    signer = Dartez.createSigner(keyStore.secretKey!);
 
     contracts = ["KT1...fgH"];
 
     parameters = ['parameters'];
 
     var invocation = Dartez.sendContractInvocatoinOperation(
-        server,
-        signer,
-        keyStore,
-        contracts,
-        [0],
-        120000,
-        1000,
-        100000,
-        ['transfer'],
-        parameters);
+        server, signer, keyStore, contracts, [0], ['transfer'], parameters);
 
     // signPayload
-    signer = Dartez.createSigner(Dartez.writeKeyWithHint('secretKey', 'edsk'));
+    signer = Dartez.createSigner('secretKey');
 
     var payload = "03...";
 
@@ -482,7 +421,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Padding(

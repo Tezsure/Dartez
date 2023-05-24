@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"pair","args":[{"prim":"nat","annots":["%balance"]},{"prim":"pair","args":[{"prim":"address","annots":["%owner"]},{"prim":"nat","annots":["%token_id"]}],"annots":["%request"]}]}]},{"prim":"storage","args":[{"prim":"nat"}]},{"prim":"code","args":[[{"prim":"CAR"},{"prim":"CAR"},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

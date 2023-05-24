@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"unit"}]},{"prim":"storage","args":[{"prim":"pair","args":[{"prim":"int","annots":["%storeAddress"]},{"prim":"pair","args":[{"prim":"string","annots":["%storeObjktids"]},{"prim":"string","annots":["%storeUsername"]}]}]}]},{"prim":"code","args":[[{"prim":"CDR"},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

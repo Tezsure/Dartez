@@ -1,0 +1,1 @@
+parameter (unit %default); storage address; code { CAST (pair unit address) ; CDR ; DUP ; SENDER ; COMPARE ; EQ ; IF {} { PUSH string "WrongCondition: sp.sender == self.data.manager" ; FAILWITH } ; NIL operation ; PAIR }

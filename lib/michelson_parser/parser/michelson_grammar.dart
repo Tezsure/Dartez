@@ -1,10 +1,10 @@
-import 'package:dartez/michelson_parser/grammar/michelson_grammar_tokenizer.dart';
+import 'package:dartez/michelson_parser/dartez_tokenizer/dartez_tokenizer.dart';
 
 class MichelsonGrammar {
-  MichelsonGrammarTokenizer? lexer;
+  late DartezTokenizer lexer;
 
-  var macroCADRconst = 'C[AD]+R';
-  var macroSETCADRconst = 'SET_C[AD]+R';
+  var macroCADRconst = RegExp('C[AD]+R');
+  var macroSETCADRconst = RegExp('SET_C[AD]+R');
   var dIPmatcher = new RegExp('DII+P');
   var dUPmatcher = new RegExp('DUU+P');
   var macroASSERTlistConst = [
@@ -40,6 +40,7 @@ class MichelsonGrammar {
   var parameter;
   var storage;
   var code;
+  var view;
   var comparableType;
   var constantType;
   var singleArgType;
@@ -64,8 +65,11 @@ class MichelsonGrammar {
   var macroSETCADR;
   var macroASSERTlist;
 
-  MichelsonGrammar() {
-    lexer = new MichelsonGrammarTokenizer({
+  int viewCount = 0;
+
+  /// viewCount is use to keep track of the number of views in a contract code and create the script format accordingly
+  MichelsonGrammar({this.viewCount = 0}) {
+    lexer = new DartezTokenizer({
       'annot': RegExp(r'[\@\%\:][a-z_A-Z0-9]+'),
       'lparen': '(',
       'rparen': ')',
@@ -78,6 +82,7 @@ class MichelsonGrammar {
       'parameter': ['parameter', 'Parameter'],
       'storage': ['Storage', 'storage'],
       'code': ['Code', 'code'],
+      'view': ['view'],
       'comparableType': [
         'int',
         'nat',
@@ -87,33 +92,141 @@ class MichelsonGrammar {
         'bool',
         'key_hash',
         'timestamp',
-        'chain_id'
+        'chain_id',
+        'never',
       ],
-      'constantType': ['key', 'unit', 'signature', 'operation', 'address'],
-      'singleArgType': ['option', 'list', 'set', 'contract'],
+      'constantType': [
+        'key',
+        'unit',
+        'signature',
+        'operation',
+        'address',
+        'bls12_381_fr',
+        'bls12_381_g1',
+        'bls12_381_g2',
+        'chest',
+        'chest_key'
+      ],
+      'singleArgType': ['option', 'list', 'set', 'contract', 'ticket'],
       'doubleArgType': ['pair', 'or', 'lambda', 'map', 'big_map'],
       'baseInstruction': [
-        'ABS', 'ADD', 'ADDRESS', 'AMOUNT', 'AND', 'BALANCE', 'BLAKE2B', 'CAR',
-        'CAST', 'CDR', 'CHECK_SIGNATURE',
-        'COMPARE', 'CONCAT', 'CONS', 'CONTRACT', 'CREATE_CONTRACT', 'DIP',
-        /*'DROP',*/ /*'DUP',*/ 'EDIV',
-        /*'EMPTY_MAP',*/
-        'EMPTY_SET', 'EQ', 'EXEC', 'FAIL', 'FAILWITH', 'GE', 'GET', 'GT',
-        'HASH_KEY', 'IF', 'IF_CONS', 'IF_LEFT', 'IF_NONE',
-        'IF_RIGHT', 'IMPLICIT_ACCOUNT', 'INT', 'ISNAT', 'ITER', 'LAMBDA', 'LE',
-        'LEFT', 'LOOP', 'LOOP_LEFT', 'LSL', 'LSR', 'LT',
-        'MAP', 'MEM', 'MUL', 'NEG', 'NEQ', 'NIL', 'NONE', 'NOT', 'NOW', 'OR',
-        'PACK', 'PAIR', /*'PUSH',*/ 'REDUCE', 'RENAME', 'RIGHT', 'SELF',
-        'SENDER', 'SET_DELEGATE', 'SHA256', 'SHA512', 'SIZE', 'SLICE', 'SOME',
-        'SOURCE', 'STEPS_TO_QUOTA', 'SUB', 'SWAP',
-        'TRANSFER_TOKENS', 'UNIT', 'UNPACK', 'UPDATE', 'XOR',
-        'UNPAIR', 'UNPAPAIR', // TODO: macro
-        'IF_SOME', // TODO: macro
-        'IFCMPEQ', 'IFCMPNEQ', 'IFCMPLT', 'IFCMPGT', 'IFCMPLE', 'IFCMPGE',
-        'CMPEQ', 'CMPNEQ', 'CMPLT', 'CMPGT', 'CMPLE',
-        'CMPGE', 'IFEQ', 'NEQ', 'IFLT', 'IFGT', 'IFLE',
-        'IFGE', // TODO: should be separate
-        /*'DIG',*/ /*'DUG',*/ 'EMPTY_BIG_MAP', 'APPLY', 'CHAIN_ID'
+        'ABS',
+        'ADD',
+        'ADDRESS',
+        'AMOUNT',
+        'AND',
+        'BALANCE',
+        'BLAKE2B',
+        'CAR',
+        'CAST',
+        'CDR',
+        'CHECK_SIGNATURE',
+        'COMPARE',
+        'CONCAT',
+        'CONS',
+        'CONTRACT',
+        'DIP',
+        'EDIV',
+        'EMPTY_SET',
+        'EQ',
+        'EXEC',
+        'FAIL',
+        'FAILWITH',
+        'GE',
+        'GET',
+        'GT',
+        'HASH_KEY',
+        'IF',
+        'IF_CONS',
+        'IF_LEFT',
+        'IF_NONE',
+        'IF_RIGHT',
+        'IMPLICIT_ACCOUNT',
+        'INT',
+        'ISNAT',
+        'ITER',
+        'LAMBDA',
+        'LE',
+        'LEFT',
+        'LOOP',
+        'LOOP_LEFT',
+        'LSL',
+        'LSR',
+        'LT',
+        'MAP',
+        'MEM',
+        'MUL',
+        'NEG',
+        'NEQ',
+        'NIL',
+        'NONE',
+        'NOT',
+        'NOW',
+        'OR',
+        'PACK',
+        'PAIR',
+        'REDUCE',
+        'RENAME',
+        'RIGHT',
+        'SELF',
+        'SENDER',
+        'SET_DELEGATE',
+        'SHA256',
+        'SHA512',
+        'SIZE',
+        'SLICE',
+        'SOME',
+        'SOURCE',
+        'STEPS_TO_QUOTA',
+        'SUB',
+        'SWAP',
+        'TRANSFER_TOKENS',
+        'UNIT',
+        'UNPACK',
+        'UPDATE',
+        'XOR',
+        'UNPAIR',
+        'UNPAPAIR',
+        'IF_SOME',
+        'IFCMPEQ',
+        'IFCMPNEQ',
+        'IFCMPLT',
+        'IFCMPGT',
+        'IFCMPLE',
+        'IFCMPGE',
+        'CMPEQ',
+        'CMPNEQ',
+        'CMPLT',
+        'CMPGT',
+        'CMPLE',
+        'CMPGE',
+        'IFEQ',
+        'NEQ',
+        'IFLT',
+        'IFGT',
+        'IFLE',
+        'IFGE',
+        'EMPTY_BIG_MAP',
+        'APPLY',
+        'CHAIN_ID',
+        'KECCAK',
+        'SHA3',
+        'PAIRING_CHECK',
+        'SAPLING_EMPTY_STATE',
+        'SAPLING_VERIFY_UPDATE',
+        'GET_AND_UPDATE',
+        'NEVER',
+        'VOTING_POWER',
+        'TOTAL_VOTING_POWER',
+        'TICKET',
+        'READ_TICKET',
+        'SPLIT_TICKET',
+        'JOIN_TICKETS',
+        'SELF_ADDRESS',
+        'LEVEL',
+        'OPEN_CHEST',
+        'VIEW',
+        'SUB_MUTEZ'
       ],
       'macroCADR': macroCADRconst,
       'macroDIP': dIPmatcher,
@@ -125,18 +238,28 @@ class MichelsonGrammar {
       'doubleArgData': ['Pair'],
       'elt': "Elt",
       'word': RegExp(r'[a-zA-Z_0-9]+'),
-      'string': RegExp(r'\"(?:\\\\[\"\\\\]|[^\\n\"\\\\])*\"'),
+      'string': RegExp(r'"(?:[^"\\]|\\.)*"'),
     });
   }
 
+  scriptToJsonWithView(d) {
+    List<String> listViews = <String>[];
+    if (viewCount > 0)
+      for (int i = 4; i <= d.length - 2; i += 2) {
+        listViews.add(d[i].toString().trim());
+      }
+    var views = listViews.join(", ");
+    return '[ ${d[0] is List ? d[0][0]['value'].toString() : d[0] is String ? d[0] : d[0]['value']}, ${d[2]}, ${views.isNotEmpty ? views + ", " : ""} { "prim": "code", "args": [ [ ${listToString(d.last)} ] ] } ]';
+  }
+
   scriptToJson(d) =>
-      '[ ${d[0] is List ? d[0][0]['value'].toString() : d[0] is String ? d[0] : d[0]['value']}, ${d[2]}, { "prim": "code", "args": [ [ ${d[4].reduce((a, e) => a + ',' + e)} ] ] } ]';
+      '[ ${d[0] is List ? d[0][0]['value'].toString() : d[0] is String ? d[0] : d[0]['value']}, ${d[2]}, { "prim": "code", "args": [ [ ${listToString(d[4])} ] ] } ]';
 
   singleArgKeywordToJson(d) =>
-      '{ "prim": "${d[0] is List ? d[0][0]['value'].toString() : d[0]['value']}", "args": [ ${d[2]} ] }';
+      '{ "prim": "${d[0] is List ? d[0][0]['value'].toString() : d[0]['value']}", "args": [ ${listToString(d[2])} ] }';
 
   keywordToJson(d) {
-    var word = d[0] is List ? d[0][0]['value'].toString() : d[0]['value'];
+    var word = getMapValue(d[0]);
 
     if (d.length == 1) {
       if (checkKeyword(word)) {
@@ -147,7 +270,7 @@ class MichelsonGrammar {
     } else {
       var annot = d[1].map((x) => '"${getMapValue(x[1])}"');
       if (checkKeyword(word)) {
-        return [expandKeyword(word, annot)];
+        return [expandKeyword(word, annot.toList())];
       } else {
         return '{ "prim": "$word", "annots": [${listToString(annot)}] }';
       }
@@ -213,12 +336,12 @@ class MichelsonGrammar {
     if (checkSetCadr(word)) {
       return expandSetCadr(word, annot);
     }
-    return false;
   }
 
   checkAssert(asser) => macroASSERTlistConst.contains(asser);
   expandAssert(asset, annot) {
-    var annotation = annot == null ? ', "annots": [$annot]' : '';
+    var annotation =
+        annot != null ? ', "annots": [${listToString(annot)}]' : '';
     switch (asset) {
       case 'ASSERT':
         return '[{"prim":"IF","args":[[],[[{"prim":"UNIT"},{"prim":"FAILWITH"$annotation}]]]}]';
@@ -265,7 +388,7 @@ class MichelsonGrammar {
     var binaryOp = keywordToJson(['$op']);
     var compare = keywordToJson(['COMPARE']);
     if (annot != null) {
-      binaryOp = '{ "prim": "$op", "annots": [$annot] }';
+      binaryOp = '{ "prim": "$op", "annots": [${listToString(annot)}] }';
     }
 
     return '[$compare, $binaryOp]';
@@ -275,18 +398,18 @@ class MichelsonGrammar {
   expandDIP(dip, instruction, {annot}) {
     var t = '';
     if (dIPmatcher.hasMatch(dip)) {
-      var c = dip.length - 2;
-      for (var i = 0; i < c; i++) {
-        t += '[{ "prim": "DIP", "args": [ ';
+      var count = dip.length - 2;
+
+      // for (var i = 0; i < count; i++) {
+      String args = count != 0 ? '{ "int": "$count" },' : '';
+      instruction = instruction != null && instruction.length > 0
+          ? "[${listToString(instruction)}]"
+          : '';
+      t += '{ "prim": "DIP", "args": [ $args ${listToString(instruction)} ]';
+      if (annot != null) {
+        t = '$t, "annots": [${listToString(annot)})}]';
       }
-      t = '$t [ $instruction ] ]';
-      if (annot == null) {
-        t = '$t, "annots": [$annot]';
-      }
-      t += ' }]';
-      for (var i = 0; i < c - 1; i++) {
-        t += ' ] }]';
-      }
+      t += ' }';
       return t;
     }
 
@@ -295,26 +418,14 @@ class MichelsonGrammar {
 
   checkDup(dup) => dUPmatcher.hasMatch(dup);
   expandDup(dup, annot) {
-    var t = '';
-    if (dUPmatcher.hasMatch(dup)) {
-      var c = dup.length - 3;
-      for (var i = 0; i < c; i++) {
-        t += '[{ "prim": "DIP", "args": [ ';
-      }
-
-      if (annot == null) {
-        t += '[{ "prim": "DUP" }]';
-      } else {
-        t += '[{ "prim": "DUP", "annots": [$annot] }]';
-      }
-
-      for (var i = 0; i < c; i++) {
-        t += ' ] },{"prim":"SWAP"}]';
-      }
-      return t;
+    var count = dup.length - 2;
+    if (count == 0) {
+      return '{ "prim": "DUP" }';
+    } else if (count != 0 && annot != null) {
+      return '{ "prim": "DUP", "args": [ { "int": "$count" } ], "annots": [${listToString(annot)}] }';
+    } else {
+      return '{ "prim": "DUP", "args": [ { "int": "$count" } ] }';
     }
-
-    throw new Exception('');
   }
 
   checkFail(fail) => fail == "FAIL";
@@ -322,15 +433,19 @@ class MichelsonGrammar {
     if (annot == null) {
       return '[ { "prim": "UNIT" }, { "prim": "FAILWITH" } ]';
     } else {
-      return '[ { "prim": "UNIT" }, { "prim": "FAILWITH", "annots": [$annot] } ]';
+      return '[ { "prim": "UNIT" }, { "prim": "FAILWITH", "annots": [${listToString(annot)}] } ]';
     }
   }
 
   checkIf(ifStatement) => (macroIFCMPlist.contains(ifStatement) ||
       macroIFlist.contains(ifStatement) ||
-      ifStatement == 'IF_SOME'); // TODO: IF_SOME
+      ifStatement == 'IF_SOME');
   expandIF(ifInstr, ifTrue, {ifFalse, annot}) {
-    var annotation = annot != null ? ', "annots": [$annot]' : '';
+    var annotation =
+        annot != null ? ', "annots": [${listToString(annot)}]' : '';
+
+    ifTrue = ifTrue != null ? listToString(ifTrue) : ifTrue;
+    ifFalse = ifFalse != null ? listToString(ifFalse) : ifFalse;
 
     switch (ifInstr) {
       case 'IFCMPEQ':
@@ -369,52 +484,42 @@ class MichelsonGrammar {
     var expandedCR = word
         .substring(1, word.length - 1)
         .split('')
-        .map((c) => (c == 'A' ? '{ "prim": "CAR" }' : '{ "prim": "CDR" }'));
+        .map((c) => (c == 'A' ? '{ "prim": "CAR" }' : '{ "prim": "CDR" }'))
+        .toList();
     if (annot != null) {
       var lastChar = word.substring(word.length - 2, word.length - 1);
       if (lastChar == 'A') {
         expandedCR[expandedCR.length - 1] =
-            '{ "prim": "CAR", "annots": [$annot] }';
+            '{ "prim": "CAR", "annots": [${listToString(annot)}] }';
       } else if (lastChar == 'D') {
         expandedCR[expandedCR.length - 1] =
-            '{ "prim": "CDR", "annots": [$annot] }';
+            '{ "prim": "CDR", "annots": [${listToString(annot)}] }';
       }
     }
 
     return '[${expandedCR.join(', ')}]';
   }
 
-  checkOther(word) =>
-      (word == "UNPAIR" || word == "UNPAPAIR"); // TODO: dynamic matching
+  checkOther(word) => (word == "UNPAIR" || word == "UNPAPAIR");
   expandOther(word, annot) {
     if (word == 'UNPAIR') {
-      if (annot == null) {
-        return '[ [ { "prim": "DUP" }, { "prim": "CAR" }, { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] } ] ]';
-      } else if (annot.length == 1) {
-        return '[ [ { "prim": "DUP" }, { "prim": "CAR", "annots": [$annot] }, { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ]  } ] ]';
-      } else if (annot.length == 2) {
-        return r'[ [ { "prim": "DUP" }, { "prim": "CAR", "annots": [${annot[0]}] }, { "prim": "DIP", "args": [ [ { "prim": "CDR", "annots": [${annot[1]}] } ] ]  } ] ]';
-      } else {
-        return '';
-      }
+      if (annot == null)
+        return '{ "prim": "UNPAIR"}';
+      else
+        return '{ "prim": "UNPAIR", "annots": [${listToString(annot)}]}';
     }
 
     if (word == 'UNPAPAIR') {
       if (annot == null) {
-        return """[ [ { "prim": "DUP" },
-                            { "prim": "CAR" },
-                            { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] } ],
-                            {"prim":"DIP","args":[[[{"prim":"DUP"},{"prim":"CAR"},{"prim":"DIP","args":[[{"prim":"CDR"}]]}]]]}]""";
+        return """ [{ "prim": "UNPAIR"},
+                            { "prim": "DIP", "args": [ [ { "prim": "UNPAIR" } ] ] }]""";
       } else {
-        return """[ [ { "prim": "DUP" },
-                            { "prim": "CAR" },
-                            { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] } ],
-                            {"prim":"DIP","args":[[[{"prim":"DUP"},{"prim":"CAR"},{"prim":"DIP","args":[[{"prim":"CDR"}]],"annots": [$annot]}]]]}]""";
+        return """[ { "prim": "UNPAIR"}, { "prim": "DIP", "args": [ [ { "prim": "UNPAIR", "annots": [${listToString(annot)}] } ] ] }]""";
       }
     }
   }
 
-  checkSetCadr(s) => new RegExp(macroSETCADRconst).hasMatch(s);
+  checkSetCadr(s) => macroSETCADRconst.hasMatch(s);
   expandSetCadr(word, annot) => nestSetCadr(word.substring(5, word.length - 1));
   nestSetCadr(r) {
     if (r.length == 0) {
@@ -438,33 +543,39 @@ class MichelsonGrammar {
   }
 
   singleArgKeywordWithParenToJson(d) =>
-      '{ "prim": "${d[2]}", "args": [ ${d[(4 + ((d.length == 7) ? 0 : 2))]} ] }';
+      '{ "prim": "${d[2] is Map ? getMapValue(d[2]) : d[2]}", "args": [ ${listToString(d[(4 + ((d.length == 7) ? 0 : 2))])} ] }';
 
-  doubleArgKeywordToJson(d) =>
-      '{ "prim": "${d[0]['value']}", "args": [ ${d[2]}, ${d[4]} ] }';
+  doubleArgKeywordToJson(d) {
+    if (d.length == 7) {
+      return '{ "prim": "${getMapValue(d[0])}", "args": [ ${listToString(d[2])}, [] ] }';
+    } else {
+      return '{ "prim": "${getMapValue(d[0])}", "args": [ ${listToString(d[2])}, ${listToString(d[4])} ] }';
+    }
+    // return '{ "prim": "${getMapValue(d[0])}", "args": [ ${d[2]}, ${d[4]} ] }';
+  }
 
   doubleArgKeywordWithParenToJson(d) =>
-      '{ "prim": "${d[2]['value']}", "args": [ ${d[4]}, ${d[6]} ] }';
+      '{ "prim": "${getMapValue(d[2])}", "args": [ ${listToString(d[4])}, ${listToString(d[6])} ] }';
 
   comparableTypeToJson(d) {
     var annot =
         d[3].map((x) => '"${x[1]['value'].toString()}"').toList()[0].toString();
-    return '{ "prim": "${d[2]['value']}", "annots": [$annot]  }';
+    return '{ "prim": "${getMapValue(d[2])}", "annots": [$annot]  }';
   }
 
   singleArgTypeKeywordWithParenToJson(d) {
     var annot = d[3].map((x) => '"${getMapValue(x[1])}"');
-    return '{ "prim": "${getMapValue(d[2])}", "args": [ ${d[5]} ], "annots": [${listToString(annot)}] }';
+    return '{ "prim": "${getMapValue(d[2])}", "annots": [${listToString(annot)}], "args": [ ${listToString(d[5])} ]}';
   }
 
   doubleArgTypeKeywordWithParenToJson(d) {
     var annot =
         d[3].map((x) => '"${x[1]['value'].toString()}"').toList()[0].toString();
     // d[3].map((x) => '"${x[1]}"');
-    return '{ "prim": "${d[2]['value']}", "args": [ ${d[5]}, ${d[7]} ], "annots": [$annot]  }';
+    return '{ "prim": "${getMapValue(d[2])}", "annots": [$annot], "args": [ ${listToString(d[5])}, ${listToString(d[7])} ] }';
   }
 
-  intToJson(d) => '{ "int": "${int.parse(getMapValue(d[0]))}" }';
+  intToJson(d) => '{ "int": "${getMapValue(d[0])}" }';
 
   bytesToJson(d) {
     return '{ "bytes": "${getMapValue(d[0]).substring(2)}" }';
@@ -519,46 +630,50 @@ class MichelsonGrammar {
 
   singleArgTypeKeywordToJson(d) {
     var word = '${d[0].toString()}';
-    var annot = d[1].map((x) => '"${x[1]}"');
+    var _annots = d[1].map((x) => '"${getMapValue(x[1])}"').toList();
+    var annot = _annots.length > 0 ? _annots[0] : '';
+
     if (checkDip(word)) {
       return expandDIP(word, d[2], annot: annot);
     } else {
-      return '{ "prim": "${d[0]}", "args": [ ${d[3]} ], "annots": [$annot] }';
+      return '{ "prim": "${getMapValue(d[0])}", "annots": [$annot], "args": [ ${d[3]} ] }';
     }
   }
 
   tripleArgKeyWordToJson(d) =>
-      '{ "prim": "${d[0]}", "args": [ ${d[2]}, ${d[4]}, [${d[6]}] ] }';
+      '{ "prim": "${getMapValue(d[0])}", "args": [ ${listToString(d[2])}, ${listToString(d[4])}, [${listToString(d[6])}] ] }';
 
   tripleArgTypeKeyWordToJson(d) {
     var annot = d[1].map((x) => '"${x[1]}"');
-    return '{ "prim": "${d[0]}", "args": [ ${d[3]}, ${d[5]}, ${d[7]} ], "annots": [$annot]  }';
+    return '{ "prim": "${getMapValue(d[0])}", "args": [ ${listToString(d[3])}, ${listToString(d[5])}, ${listToString(d[7])} ], "annots": [${listToString(annot)}]  }';
   }
 
   doubleArgInstrKeywordToJson(d) {
-    var word = '${d[0] is List ? d[0][0]['value'].toString() : d[0]['value']}';
+    var word = getMapValue(d[0]);
     if (checkIf(word)) {
-      return expandIF(word, d[2], ifFalse: d[4] != null);
+      return expandIF(word, d[2], ifFalse: d[4]);
     } else {
-      return '{ "prim": "$word", "args": [ [${d[2]}], [${d[4]}] ] }';
+      return '{ "prim": "$word", "args": [ [${d[2] is List ? listToString(d[2]) : d[2]}], [${d[4] is List ? listToString(d[4]) : d[4]}] ] }';
     }
   }
 
   doubleArgTypeKeywordToJson(d) {
     var annot = d[1].map((x) => '"${x[1]}"');
-    return '{ "prim": "${d[0]}", "args": [ ${d[4]}, ${d[6]} ], "annots": [$annot]  }';
+    return '{ "prim": "${getMapValue(d[0])}", "args": [ ${d[4]}, ${d[6]} ], "annots": [${listToString(annot)}]  }';
   }
 
-  pushToJson(d) => '{ "prim": "${d[0]}", "args": [${d[2]}, []] }';
+  pushToJson(d) =>
+      '{ "prim": "${getMapValue(d[0])}", "args": [${listToString(d[2])}, []] }';
 
   pushWithAnnotsToJson(d) {
-    var annot = d[1].map((x) => '"${x[1]}"');
+    var _annot = d[1].map((x) => '"${getMapValue(x[1])}"').toList();
+    var annot = _annot.length > 0 ? _annot[0] : '';
     return '{ "prim": "PUSH", "args": [ ${d[3]}, ${d[5]} ], "annots": [$annot]  }';
   }
 
   dipnToJson(d) => (d.length > 4)
-      ? '{ "prim": "${d[0]}", "args": [ { "int": "${d[2]}" }, [ ${d[4]} ] ] }'
-      : '{ "prim": "${d[0]}", "args": [ ${d[2]} ] }';
+      ? '{ "prim": "${getMapValue(d[0])}", "args": [ { "int": "${getMapValue(d[2])}" }, [ ${getMapValue(d[4])} ] ] }'
+      : '{ "prim": "${getMapValue(d[0])}", "args": [ ${getMapValue(d[2])} ] }';
 
   dupnToJson(d) {
     var n = int.parse(d[2].toString());
@@ -579,7 +694,7 @@ class MichelsonGrammar {
       '{ "prim": "${getMapValue(d[0])}", "args": [ { "int": "${getMapValue(d[2])}" } ] }';
 
   subContractToJson(d) =>
-      '{ "prim":"CREATE_CONTRACT", "args": [ [ ${d[4]}, ${d[6]}, {"prim": "code" , "args":[ [ ${d[8]} ] ] } ] ] }';
+      '{ "prim":"CREATE_CONTRACT", "args": [ [ ${listToString(d[4])}, ${listToString(d[6])}, {"prim": "code" , "args":[ [ ${listToString(d[8])} ] ] } ] ] }';
 
   instructionListToJson(d) {
     var instructionOne = [d[2]];
@@ -589,24 +704,103 @@ class MichelsonGrammar {
       ..map((x) => nestedArrayChecker(x));
   }
 
-  doubleArgParenKeywordToJson(d) =>
-      '{ "prim": "${d[0]}", "args": [ ${d[4]}, ${d[8]} ] }';
+  saplingToJson(d) {
+    if (d.length == 7) {
+      var annot = d[3].map((x) => '"${getMapValue(x[1])}"').toList();
+      return '{ "prim": "${getMapValue(d[2])}", "args": [ { "int": "${getMapValue(d[5])}" } ], "annots": [${listToString(annot)}] }';
+    } else {
+      return '{ "prim": "${getMapValue(d[2])}", "args": [ { "int": "${getMapValue(d[4])}" } ] }';
+    }
+  }
 
-  listToString(list) =>
-      removeIfNextIsSame(list.toList()).reduce((a, e) => a + ',' + e);
+  viewToJson(d) {
+    return '{ "prim": "${getMapValue(d[0])}", "args": [ ${listToString([
+          d[2],
+          d[4],
+          d[6]
+        ])}, [${listToString(d[8])}] ] }';
+  }
+
+  viewCallToJson(d) {
+    return '{ "prim": "${getMapValue(d[0])}", "args": [ ${listToString([
+          d[2],
+          d[4],
+        ])} ] }';
+  }
+
+  doubleArgParenKeywordToJson(d) =>
+      '{ "prim": "${d[0] is List ? getMapValue(d[0]) : d[0]['value']}", "args": [ ${listToString(d[4])}, ${listToString(d[8])} ] }';
+
+  listToString(list) {
+    if (list is String || list == null) return list;
+    var result = list.toList().fold("", (a, e) {
+      if (e != "" && e != null) {
+        e = e is List ? listToString(e) : e;
+        return a + '${e.isNotEmpty ? e + "," : ""}';
+      }
+      return a;
+    });
+
+    return result.isEmpty ? "" : result.replaceAll(new RegExp(r',\s*$'), '');
+  }
 
   removeIfNextIsSame(list) {
     for (var i = 0; i < list.length; i++) {
+      if (list[i] is List && i != 0) {
+        if (list[i - 1] is List &&
+            list[i].fold("", (t, e) => t + "_" + e.hashCode.toString()) ==
+                list[i - 1]
+                    .fold("", (t, e) => t + "_" + e.hashCode.toString())) {
+          list.removeAt(i);
+        }
+        continue;
+      }
       if (i != 0 && list[i - 1] == list[i]) {
-        list.removeAt(i);
+        // list.removeAt(i);
       }
     }
     return list;
   }
 
-  getMapValue(d) => d is List ? d[0]['value'].toString() : d['value'];
+  getMapValue(d) => d is List
+      ? d[0]['value'].toString()
+      : d is String
+          ? d
+          : d['value'].toString();
 
   id(x) => x[0];
+
+  removeDuplicateAndKeepUpdated(list) {
+    if (list.length == 1) return list;
+
+    try {
+      var last = list.last is List
+          ? (list.last.where((e) => e == null).length != 0 ? list.last : null)
+          : list.last;
+
+      var colData = list.fold({}, (a, e) {
+        if (e is List && e.where((e) => e == null).length != 0) return a;
+        // check if the first and last element is same in nested array and remove
+        if (a.length > 0 &&
+            e is List &&
+            e.first.toString().hashCode ==
+                a.values.last.first.toString().hashCode &&
+            e.last.toString().hashCode ==
+                a.values.last.last.toString().hashCode) {
+          a.remove(a.keys.last);
+        }
+        var key = e.toString().hashCode;
+        a[key] = e;
+        return a;
+      });
+
+      return last != null
+          ? {...colData, last.toString().hashCode: last}.values.toList()
+          : colData.values.toList();
+    } catch (e) {
+      return list;
+    }
+  }
 
   Map<String, dynamic> get grammar => {
         'Lexer': lexer,
@@ -643,6 +837,11 @@ class MichelsonGrammar {
           },
           {
             "name": "main",
+            "symbols": ["view"],
+            "postprocess": id
+          },
+          {
+            "name": "main",
             "symbols": ["script"],
             "postprocess": id
           },
@@ -663,13 +862,28 @@ class MichelsonGrammar {
           },
           {
             "name": "script",
+            "symbols": [
+              "parameter",
+              "_",
+              "storage",
+              ...List.filled(this.viewCount, [
+                "_",
+                "view",
+              ]).expand((e) => e).toList(),
+              "_",
+              "code",
+            ],
+            "postprocess": scriptToJsonWithView
+          },
+          {
+            "name": "script",
             "symbols": ["parameter", "_", "storage", "_", "code"],
             "postprocess": scriptToJson
           },
           {
             "name": "parameterValue",
             "symbols": [
-              (lexer!.has("parameter") ? {'type': "parameter"} : parameter),
+              (lexer.has("parameter") ? {"type": "parameter"} : parameter),
               "_",
               "typeData",
               "_",
@@ -680,7 +894,7 @@ class MichelsonGrammar {
           {
             "name": "storageValue",
             "symbols": [
-              (lexer!.has("storage") ? {'type': "storage"} : storage),
+              (lexer.has("storage") ? {"type": "storage"} : storage),
               "_",
               "typeData",
               "_",
@@ -691,7 +905,7 @@ class MichelsonGrammar {
           {
             "name": "parameter",
             "symbols": [
-              (lexer!.has("parameter") ? {'type': "parameter"} : parameter),
+              (lexer.has("parameter") ? {"type": "parameter"} : parameter),
               "_",
               "type",
               "_",
@@ -702,7 +916,7 @@ class MichelsonGrammar {
           {
             "name": "storage",
             "symbols": [
-              (lexer!.has("storage") ? {'type': "storage"} : storage),
+              (lexer.has("storage") ? {"type": "storage"} : storage),
               "_",
               "type",
               "_",
@@ -713,7 +927,7 @@ class MichelsonGrammar {
           {
             "name": "code",
             "symbols": [
-              (lexer!.has("code") ? {'type': "code"} : code),
+              (lexer.has("code") ? {"type": "code"} : code),
               "_",
               "subInstruction",
               "_",
@@ -723,9 +937,27 @@ class MichelsonGrammar {
             "postprocess": (d) => d[2]
           },
           {
+            "name": "view",
+            "symbols": [
+              (lexer.has("view") ? {"type": "view"} : view),
+              "_",
+              "data",
+              "_",
+              "type",
+              "_",
+              "type",
+              "_",
+              "subInstruction",
+              "_",
+              "semicolons",
+              "_"
+            ],
+            "postprocess": viewToJson
+          },
+          {
             "name": "code",
             "symbols": [
-              (lexer!.has("code") ? {'type': "code"} : code),
+              (lexer.has("code") ? {"type": "code"} : code),
               "_",
               {"literal": "{};"}
             ],
@@ -734,8 +966,8 @@ class MichelsonGrammar {
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("comparableType")
-                  ? {'type': "comparableType"}
+              (lexer.has("comparableType")
+                  ? {"type": "comparableType"}
                   : comparableType)
             ],
             "postprocess": keywordToJson
@@ -743,8 +975,8 @@ class MichelsonGrammar {
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("constantType")
-                  ? {'type': "constantType"}
+              (lexer.has("constantType")
+                  ? {"type": "constantType"}
                   : constantType)
             ],
             "postprocess": keywordToJson
@@ -752,8 +984,8 @@ class MichelsonGrammar {
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("singleArgType")
-                  ? {'type': "singleArgType"}
+              (lexer.has("singleArgType")
+                  ? {"type": "singleArgType"}
                   : singleArgType),
               "_",
               "type"
@@ -763,42 +995,42 @@ class MichelsonGrammar {
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("singleArgType")
-                  ? {'type': "singleArgType"}
+              (lexer.has("singleArgType")
+                  ? {"type": "singleArgType"}
                   : singleArgType),
               "_",
               "type",
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": singleArgKeywordWithParenToJson
           },
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("singleArgType")
-                  ? {'type': "singleArgType"}
+              (lexer.has("singleArgType")
+                  ? {"type": "singleArgType"}
                   : singleArgType),
               "_",
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
               "type",
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen),
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen),
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": singleArgKeywordWithParenToJson
           },
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("doubleArgType")
-                  ? {'type': "doubleArgType"}
+              (lexer.has("doubleArgType")
+                  ? {"type": "doubleArgType"}
                   : doubleArgType),
               "_",
               "type",
@@ -810,17 +1042,17 @@ class MichelsonGrammar {
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("doubleArgType")
-                  ? {'type': "doubleArgType"}
+              (lexer.has("doubleArgType")
+                  ? {"type": "doubleArgType"}
                   : doubleArgType),
               "_",
               "type",
               "_",
               "type",
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": doubleArgKeywordWithParenToJson
           },
@@ -828,7 +1060,7 @@ class MichelsonGrammar {
             "name": r"type$ebnf$1$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -839,19 +1071,20 @@ class MichelsonGrammar {
             "name": r"type$ebnf$1$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
             "name": r"type$ebnf$1",
             "symbols": [r"type$ebnf$1", r"type$ebnf$1$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("comparableType")
-                  ? {'type': "comparableType"}
+              (lexer.has("comparableType")
+                  ? {"type": "comparableType"}
                   : comparableType),
               r"type$ebnf$1"
             ],
@@ -861,7 +1094,7 @@ class MichelsonGrammar {
             "name": r"type$ebnf$2$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -872,19 +1105,20 @@ class MichelsonGrammar {
             "name": r"type$ebnf$2$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
             "name": r"type$ebnf$2",
             "symbols": [r"type$ebnf$2", r"type$ebnf$2$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("constantType")
-                  ? {'type': "constantType"}
+              (lexer.has("constantType")
+                  ? {"type": "constantType"}
                   : constantType),
               r"type$ebnf$2"
             ],
@@ -894,7 +1128,7 @@ class MichelsonGrammar {
             "name": r"type$ebnf$3$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -905,25 +1139,26 @@ class MichelsonGrammar {
             "name": r"type$ebnf$3$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
             "name": r"type$ebnf$3",
             "symbols": [r"type$ebnf$3", r"type$ebnf$3$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("comparableType")
-                  ? {'type': "comparableType"}
+              (lexer.has("comparableType")
+                  ? {"type": "comparableType"}
                   : comparableType),
               r"type$ebnf$3",
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": comparableTypeToJson
           },
@@ -931,7 +1166,7 @@ class MichelsonGrammar {
             "name": r"type$ebnf$4$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -942,25 +1177,26 @@ class MichelsonGrammar {
             "name": r"type$ebnf$4$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
             "name": r"type$ebnf$4",
             "symbols": [r"type$ebnf$4", r"type$ebnf$4$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("constantType")
-                  ? {'type': "constantType"}
+              (lexer.has("constantType")
+                  ? {"type": "constantType"}
                   : constantType),
               r"type$ebnf$4",
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": comparableTypeToJson
           },
@@ -968,7 +1204,7 @@ class MichelsonGrammar {
             "name": r"type$ebnf$5$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -979,26 +1215,27 @@ class MichelsonGrammar {
             "name": r"type$ebnf$5$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
             "name": r"type$ebnf$5",
             "symbols": [r"type$ebnf$5", r"type$ebnf$5$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("singleArgType")
-                  ? {'type': "singleArgType"}
+              (lexer.has("singleArgType")
+                  ? {"type": "singleArgType"}
                   : singleArgType),
               r"type$ebnf$5",
               "_",
               "type",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": singleArgTypeKeywordWithParenToJson
           },
@@ -1006,7 +1243,7 @@ class MichelsonGrammar {
             "name": r"type$ebnf$6$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1017,36 +1254,135 @@ class MichelsonGrammar {
             "name": r"type$ebnf$6$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
             "name": r"type$ebnf$6",
             "symbols": [r"type$ebnf$6", r"type$ebnf$6$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "type",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("doubleArgType")
-                  ? {'type': "doubleArgType"}
+              (lexer.has("doubleArgType")
+                  ? {"type": "doubleArgType"}
                   : doubleArgType),
               r"type$ebnf$6",
               "_",
               "type",
               "_",
               "type",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": doubleArgTypeKeywordWithParenToJson
           },
           {
+            "name": r"type$ebnf$7$subexpression$1",
+            "symbols": [
+              "_",
+              (lexer.has("annot") ? {"type": "annot"} : annot)
+            ]
+          },
+          {
+            "name": r"type$ebnf$7",
+            "symbols": [r"type$ebnf$7$subexpression$1"]
+          },
+          {
+            "name": r"type$ebnf$7$subexpression$2",
+            "symbols": [
+              "_",
+              (lexer.has("annot") ? {"type": "annot"} : annot)
+            ]
+          },
+          {
+            "name": r"type$ebnf$7",
+            "symbols": [r"type$ebnf$7", r"type$ebnf$7$subexpression$2"],
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
+          },
+          {
+            "name": "type",
+            "symbols": [
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
+              "_",
+              {"literal": "sapling_state"},
+              r"type$ebnf$7",
+              "_",
+              (lexer.has("number") ? {"type": "number"} : number),
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
+            ],
+            "postprocess": saplingToJson
+          },
+          {
+            "name": r"type$ebnf$8$subexpression$1",
+            "symbols": [
+              "_",
+              (lexer.has("annot") ? {"type": "annot"} : annot)
+            ]
+          },
+          {
+            "name": r"type$ebnf$8",
+            "symbols": [r"type$ebnf$8$subexpression$1"]
+          },
+          {
+            "name": r"type$ebnf$8$subexpression$2",
+            "symbols": [
+              "_",
+              (lexer.has("annot") ? {"type": "annot"} : annot)
+            ]
+          },
+          {
+            "name": r"type$ebnf$8",
+            "symbols": [r"type$ebnf$8", r"type$ebnf$8$subexpression$2"],
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
+          },
+          {
+            "name": "type",
+            "symbols": [
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
+              "_",
+              {"literal": "sapling_transaction"},
+              r"type$ebnf$8",
+              "_",
+              (lexer.has("number") ? {"type": "number"} : number),
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
+            ],
+            "postprocess": saplingToJson
+          },
+          {
+            "name": "type",
+            "symbols": [
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
+              "_",
+              {"literal": "sapling_state"},
+              "_",
+              (lexer.has("number") ? {"type": "number"} : number),
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
+            ],
+            "postprocess": saplingToJson
+          },
+          {
+            "name": "type",
+            "symbols": [
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
+              "_",
+              {"literal": "sapling_transaction"},
+              "_",
+              (lexer.has("number") ? {"type": "number"} : number),
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
+            ],
+            "postprocess": saplingToJson
+          },
+          {
             "name": "typeData",
             "symbols": [
-              (lexer!.has("singleArgType")
-                  ? {'type': "singleArgType"}
+              (lexer.has("singleArgType")
+                  ? {"type": "singleArgType"}
                   : singleArgType),
               "_",
               "typeData"
@@ -1056,23 +1392,23 @@ class MichelsonGrammar {
           {
             "name": "typeData",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("singleArgType")
-                  ? {'type': "singleArgType"}
+              (lexer.has("singleArgType")
+                  ? {"type": "singleArgType"}
                   : singleArgType),
               "_",
               "typeData",
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": singleArgKeywordWithParenToJson
           },
           {
             "name": "typeData",
             "symbols": [
-              (lexer!.has("doubleArgType")
-                  ? {'type': "doubleArgType"}
+              (lexer.has("doubleArgType")
+                  ? {"type": "doubleArgType"}
                   : doubleArgType),
               "_",
               "typeData",
@@ -1084,17 +1420,17 @@ class MichelsonGrammar {
           {
             "name": "typeData",
             "symbols": [
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
-              (lexer!.has("doubleArgType")
-                  ? {'type': "doubleArgType"}
+              (lexer.has("doubleArgType")
+                  ? {"type": "doubleArgType"}
                   : doubleArgType),
               "_",
               "typeData",
               "_",
               "typeData",
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen)
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen)
             ],
             "postprocess": doubleArgKeywordWithParenToJson
           },
@@ -1111,31 +1447,31 @@ class MichelsonGrammar {
           {
             "name": "typeData",
             "symbols": [
-              (lexer!.has("number") ? {'type': "number"} : number)
+              (lexer.has("number") ? {"type": "number"} : number)
             ],
             "postprocess": intToJson
           },
           {
             "name": "typeData",
             "symbols": [
-              (lexer!.has("string") ? {'type': "string"} : string)
+              (lexer.has("string") ? {"type": "string"} : string)
             ],
             "postprocess": stringToJson
           },
           {
             "name": "typeData",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": (d) => []
           },
           {
             "name": "data",
             "symbols": [
-              (lexer!.has("constantData")
-                  ? {'type': "constantData"}
+              (lexer.has("constantData")
+                  ? {"type": "constantData"}
                   : constantData)
             ],
             "postprocess": keywordToJson
@@ -1143,8 +1479,8 @@ class MichelsonGrammar {
           {
             "name": "data",
             "symbols": [
-              (lexer!.has("singleArgData")
-                  ? {'type': "singleArgData"}
+              (lexer.has("singleArgData")
+                  ? {"type": "singleArgData"}
                   : singleArgData),
               "_",
               "data"
@@ -1154,13 +1490,41 @@ class MichelsonGrammar {
           {
             "name": "data",
             "symbols": [
-              (lexer!.has("doubleArgData")
-                  ? {'type': "doubleArgData"}
+              (lexer.has("doubleArgData")
+                  ? {"type": "doubleArgData"}
+                  : doubleArgData),
+              "_",
+              "data",
+              "_",
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
+              "_",
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
+            ],
+            "postprocess": doubleArgKeywordToJson
+          },
+          {
+            "name": "data",
+            "symbols": [
+              (lexer.has("doubleArgData")
+                  ? {"type": "doubleArgData"}
                   : doubleArgData),
               "_",
               "data",
               "_",
               "data"
+            ],
+            "postprocess": doubleArgKeywordToJson
+          },
+          {
+            "name": "data",
+            "symbols": [
+              (lexer.has("doubleArgData")
+                  ? {"type": "doubleArgData"}
+                  : doubleArgData),
+              "_",
+              "data",
+              "_",
+              "subInstruction"
             ],
             "postprocess": doubleArgKeywordToJson
           },
@@ -1177,30 +1541,30 @@ class MichelsonGrammar {
           {
             "name": "data",
             "symbols": [
-              (lexer!.has("string") ? {'type': "string"} : string)
+              (lexer.has("string") ? {"type": "string"} : string)
             ],
             "postprocess": stringToJson
           },
           {
             "name": "data",
             "symbols": [
-              (lexer!.has("bytes") ? {'type': "bytes"} : bytes)
+              (lexer.has("bytes") ? {"type": "bytes"} : bytes)
             ],
             "postprocess": bytesToJson
           },
           {
             "name": "data",
             "symbols": [
-              (lexer!.has("number") ? {'type': "number"} : number)
+              (lexer.has("number") ? {"type": "number"} : number)
             ],
             "postprocess": intToJson
           },
           {
             "name": "subData",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": (d) => "[]"
           },
@@ -1219,7 +1583,8 @@ class MichelsonGrammar {
           {
             "name": r"subData$ebnf$1",
             "symbols": [r"subData$ebnf$1", r"subData$ebnf$1$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subData",
@@ -1241,7 +1606,7 @@ class MichelsonGrammar {
           {
             "name": r"subData$ebnf$2$subexpression$1$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subData$ebnf$2$subexpression$1",
@@ -1266,7 +1631,7 @@ class MichelsonGrammar {
           {
             "name": r"subData$ebnf$2$subexpression$2$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subData$ebnf$2$subexpression$2",
@@ -1280,7 +1645,8 @@ class MichelsonGrammar {
           {
             "name": r"subData$ebnf$2",
             "symbols": [r"subData$ebnf$2", r"subData$ebnf$2$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subData",
@@ -1295,9 +1661,9 @@ class MichelsonGrammar {
           {
             "name": "subElt",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": (d) => "[]"
           },
@@ -1311,7 +1677,7 @@ class MichelsonGrammar {
           {
             "name": r"subElt$ebnf$1$subexpression$1$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subElt$ebnf$1$subexpression$1",
@@ -1331,7 +1697,7 @@ class MichelsonGrammar {
           {
             "name": r"subElt$ebnf$1$subexpression$2$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subElt$ebnf$1$subexpression$2",
@@ -1340,7 +1706,8 @@ class MichelsonGrammar {
           {
             "name": r"subElt$ebnf$1",
             "symbols": [r"subElt$ebnf$1", r"subElt$ebnf$1$subexpression$2"],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subElt",
@@ -1355,7 +1722,7 @@ class MichelsonGrammar {
           {
             "name": "elt",
             "symbols": [
-              (lexer!.has("elt") ? {'type': "elt"} : elt),
+              (lexer.has("elt") ? {"type": "elt"} : elt),
               "_",
               "data",
               "_",
@@ -1366,9 +1733,9 @@ class MichelsonGrammar {
           {
             "name": "subTypeData",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": (d) => "[]"
           },
@@ -1382,7 +1749,7 @@ class MichelsonGrammar {
           {
             "name": r"subTypeData$ebnf$1$subexpression$1$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subTypeData$ebnf$1$subexpression$1",
@@ -1406,7 +1773,7 @@ class MichelsonGrammar {
           {
             "name": r"subTypeData$ebnf$1$subexpression$2$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subTypeData$ebnf$1$subexpression$2",
@@ -1422,7 +1789,8 @@ class MichelsonGrammar {
               r"subTypeData$ebnf$1",
               r"subTypeData$ebnf$1$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subTypeData",
@@ -1444,7 +1812,7 @@ class MichelsonGrammar {
           {
             "name": r"subTypeData$ebnf$2$subexpression$1$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subTypeData$ebnf$2$subexpression$1",
@@ -1468,7 +1836,7 @@ class MichelsonGrammar {
           {
             "name": r"subTypeData$ebnf$2$subexpression$2$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subTypeData$ebnf$2$subexpression$2",
@@ -1484,7 +1852,8 @@ class MichelsonGrammar {
               r"subTypeData$ebnf$2",
               r"subTypeData$ebnf$2$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subTypeData",
@@ -1499,9 +1868,9 @@ class MichelsonGrammar {
           {
             "name": "subTypeElt",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": (d) => "[]"
           },
@@ -1515,7 +1884,7 @@ class MichelsonGrammar {
           {
             "name": r"subTypeElt$ebnf$1$subexpression$1$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subTypeElt$ebnf$1$subexpression$1",
@@ -1539,7 +1908,7 @@ class MichelsonGrammar {
           {
             "name": r"subTypeElt$ebnf$1$subexpression$2$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subTypeElt$ebnf$1$subexpression$2",
@@ -1555,7 +1924,8 @@ class MichelsonGrammar {
               r"subTypeElt$ebnf$1",
               r"subTypeElt$ebnf$1$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subTypeElt",
@@ -1577,7 +1947,7 @@ class MichelsonGrammar {
           {
             "name": r"subTypeElt$ebnf$2$subexpression$1$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subTypeElt$ebnf$2$subexpression$1",
@@ -1602,7 +1972,7 @@ class MichelsonGrammar {
           {
             "name": r"subTypeElt$ebnf$2$subexpression$2$ebnf$1",
             "symbols": [],
-            // "postprocess": () => null
+            "postprocess": (_) => null
           },
           {
             "name": r"subTypeElt$ebnf$2$subexpression$2",
@@ -1619,7 +1989,8 @@ class MichelsonGrammar {
               r"subTypeElt$ebnf$2",
               r"subTypeElt$ebnf$2$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subTypeElt",
@@ -1634,7 +2005,7 @@ class MichelsonGrammar {
           {
             "name": "typeElt",
             "symbols": [
-              (lexer!.has("elt") ? {'type': "elt"} : elt),
+              (lexer.has("elt") ? {"type": "elt"} : elt),
               "_",
               "typeData",
               "_",
@@ -1645,20 +2016,20 @@ class MichelsonGrammar {
           {
             "name": "subInstruction",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": (d) => ""
           },
           {
             "name": "subInstruction",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
               "instruction",
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": (d) => d[2]
           },
@@ -1667,7 +2038,7 @@ class MichelsonGrammar {
             "symbols": [
               "instruction",
               "_",
-              (lexer!.has("semicolon") ? {'type': "semicolon"} : semicolon),
+              (lexer.has("semicolon") ? {"type": "semicolon"} : semicolon),
               "_"
             ]
           },
@@ -1680,7 +2051,7 @@ class MichelsonGrammar {
             "symbols": [
               "instruction",
               "_",
-              (lexer!.has("semicolon") ? {'type': "semicolon"} : semicolon),
+              (lexer.has("semicolon") ? {"type": "semicolon"} : semicolon),
               "_"
             ]
           },
@@ -1690,17 +2061,18 @@ class MichelsonGrammar {
               r"subInstruction$ebnf$1",
               r"subInstruction$ebnf$1$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subInstruction",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
               r"subInstruction$ebnf$1",
               "instruction",
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": instructionSetToJsonNoSemi
           },
@@ -1709,7 +2081,7 @@ class MichelsonGrammar {
             "symbols": [
               "instruction",
               "_",
-              (lexer!.has("semicolon") ? {'type': "semicolon"} : semicolon),
+              (lexer.has("semicolon") ? {"type": "semicolon"} : semicolon),
               "_"
             ]
           },
@@ -1722,7 +2094,7 @@ class MichelsonGrammar {
             "symbols": [
               "instruction",
               "_",
-              (lexer!.has("semicolon") ? {'type': "semicolon"} : semicolon),
+              (lexer.has("semicolon") ? {"type": "semicolon"} : semicolon),
               "_"
             ]
           },
@@ -1732,57 +2104,58 @@ class MichelsonGrammar {
               r"subInstruction$ebnf$2",
               r"subInstruction$ebnf$2$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "subInstruction",
             "symbols": [
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
               r"subInstruction$ebnf$2",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": instructionSetToJsonSemi
           },
           {
             "name": "instructions",
             "symbols": [
-              (lexer!.has("baseInstruction")
-                  ? {'type': "baseInstruction"}
+              (lexer.has("baseInstruction")
+                  ? {"type": "baseInstruction"}
                   : baseInstruction)
             ]
           },
           {
             "name": "instructions",
             "symbols": [
-              (lexer!.has("macroCADR") ? {'type': "macroCADR"} : macroCADR)
+              (lexer.has("macroCADR") ? {"type": "macroCADR"} : macroCADR)
             ]
           },
           {
             "name": "instructions",
             "symbols": [
-              (lexer!.has("macroDIP") ? {'type': "macroDIP"} : macroDIP)
+              (lexer.has("macroDIP") ? {"type": "macroDIP"} : macroDIP)
             ]
           },
           {
             "name": "instructions",
             "symbols": [
-              (lexer!.has("macroDUP") ? {'type': "macroDUP"} : macroDUP)
+              (lexer.has("macroDUP") ? {"type": "macroDUP"} : macroDUP)
             ]
           },
           {
             "name": "instructions",
             "symbols": [
-              (lexer!.has("macroSETCADR")
-                  ? {'type': "macroSETCADR"}
+              (lexer.has("macroSETCADR")
+                  ? {"type": "macroSETCADR"}
                   : macroSETCADR)
             ]
           },
           {
             "name": "instructions",
             "symbols": [
-              (lexer!.has("macroASSERTlist")
-                  ? {'type': "macroASSERTlist"}
+              (lexer.has("macroASSERTlist")
+                  ? {"type": "macroASSERTlist"}
                   : macroASSERTlist)
             ]
           },
@@ -1800,7 +2173,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$1$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1811,7 +2184,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$1$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1820,7 +2193,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$1",
               r"instruction$ebnf$1$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -1836,7 +2210,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$2$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1847,7 +2221,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$2$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1856,7 +2230,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$2",
               r"instruction$ebnf$2$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -1877,7 +2252,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$3$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1888,7 +2263,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$3$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1897,7 +2272,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$3",
               r"instruction$ebnf$3$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -1913,7 +2289,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$4$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1924,7 +2300,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$4$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1933,7 +2309,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$4",
               r"instruction$ebnf$4$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -1957,7 +2334,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$5$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1968,7 +2345,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$5$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -1977,7 +2354,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$5",
               r"instruction$ebnf$5$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2008,7 +2386,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$6$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -2019,7 +2397,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$6$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -2028,7 +2406,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$6",
               r"instruction$ebnf$6$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2051,7 +2430,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$7$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -2062,7 +2441,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$7$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -2071,7 +2450,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$7",
               r"instruction$ebnf$7$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2103,8 +2483,8 @@ class MichelsonGrammar {
               "_",
               "type",
               "_",
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": pushToJson
           },
@@ -2112,7 +2492,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$8$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -2123,7 +2503,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$8$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -2132,7 +2512,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$8",
               r"instruction$ebnf$8$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2148,12 +2529,13 @@ class MichelsonGrammar {
           },
           {
             "name": r"instruction$ebnf$9",
-            "symbols": [RegExp(r'[0-9]')]
+            "symbols": [RegExp("[0-9]")]
           },
           {
             "name": r"instruction$ebnf$9",
-            "symbols": [r"instruction$ebnf$9", RegExp(r'[0-9]')],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "symbols": [r"instruction$ebnf$9", RegExp("[0-9]")],
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2168,12 +2550,13 @@ class MichelsonGrammar {
           },
           {
             "name": r"instruction$ebnf$10",
-            "symbols": [RegExp(r'[0-9]')]
+            "symbols": [RegExp("[0-9]")]
           },
           {
             "name": r"instruction$ebnf$10",
-            "symbols": [r"instruction$ebnf$10", RegExp(r'[0-9]')],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "symbols": [r"instruction$ebnf$10", RegExp("[0-9]")],
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2182,7 +2565,7 @@ class MichelsonGrammar {
               "_",
               r"instruction$ebnf$10"
             ],
-            "postprocess": dupnToJson
+            "postprocess": dignToJson
           },
           {
             "name": "instruction",
@@ -2195,7 +2578,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$11$subexpression$1",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -2206,7 +2589,7 @@ class MichelsonGrammar {
             "name": r"instruction$ebnf$11$subexpression$2",
             "symbols": [
               "_",
-              (lexer!.has("annot") ? {'type': "annot"} : annot)
+              (lexer.has("annot") ? {"type": "annot"} : annot)
             ]
           },
           {
@@ -2215,7 +2598,8 @@ class MichelsonGrammar {
               r"instruction$ebnf$11",
               r"instruction$ebnf$11$subexpression$2"
             ],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2228,12 +2612,13 @@ class MichelsonGrammar {
           },
           {
             "name": r"instruction$ebnf$12",
-            "symbols": [RegExp(r'[0-9]')]
+            "symbols": [RegExp("[0-9]")]
           },
           {
             "name": r"instruction$ebnf$12",
-            "symbols": [r"instruction$ebnf$12", RegExp(r'[0-9]')],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "symbols": [r"instruction$ebnf$12", RegExp("[0-9]")],
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2246,12 +2631,13 @@ class MichelsonGrammar {
           },
           {
             "name": r"instruction$ebnf$13",
-            "symbols": [RegExp(r'[0-9]')]
+            "symbols": [RegExp("[0-9]")]
           },
           {
             "name": r"instruction$ebnf$13",
-            "symbols": [r"instruction$ebnf$13", RegExp(r'[0-9]')],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "symbols": [r"instruction$ebnf$13", RegExp("[0-9]")],
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2264,12 +2650,13 @@ class MichelsonGrammar {
           },
           {
             "name": r"instruction$ebnf$14",
-            "symbols": [RegExp(r'[0-9]')]
+            "symbols": [RegExp("[0-9]")]
           },
           {
             "name": r"instruction$ebnf$14",
-            "symbols": [r"instruction$ebnf$14", RegExp(r'[0-9]')],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "symbols": [r"instruction$ebnf$14", RegExp("[0-9]")],
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "instruction",
@@ -2290,9 +2677,22 @@ class MichelsonGrammar {
           {
             "name": "instruction",
             "symbols": [
+              {"literal": "VIEW"},
+              "_",
+              "data",
+              "_",
+              "type",
+              "_",
+              "semicolons"
+            ],
+            "postprocess": viewCallToJson
+          },
+          {
+            "name": "instruction",
+            "symbols": [
               {"literal": "CREATE_CONTRACT"},
               "_",
-              (lexer!.has("lbrace") ? {'type': "lbrace"} : lbrace),
+              (lexer.has("lbrace") ? {"type": "lbrace"} : lbrace),
               "_",
               "parameter",
               "_",
@@ -2300,7 +2700,7 @@ class MichelsonGrammar {
               "_",
               "code",
               "_",
-              (lexer!.has("rbrace") ? {'type': "rbrace"} : rbrace)
+              (lexer.has("rbrace") ? {"type": "rbrace"} : rbrace)
             ],
             "postprocess": subContractToJson
           },
@@ -2320,11 +2720,11 @@ class MichelsonGrammar {
             "symbols": [
               {"literal": "EMPTY_MAP"},
               "_",
-              (lexer!.has("lparen") ? {'type': "lparen"} : lparen),
+              (lexer.has("lparen") ? {"type": "lparen"} : lparen),
               "_",
               "type",
               "_",
-              (lexer!.has("rparen") ? {'type': "rparen"} : rparen),
+              (lexer.has("rparen") ? {"type": "rparen"} : rparen),
               "_",
               "type"
             ],
@@ -2333,8 +2733,9 @@ class MichelsonGrammar {
           {"name": r"_$ebnf$1", "symbols": []},
           {
             "name": r"_$ebnf$1",
-            "symbols": [r"_$ebnf$1", RegExp(r'[\s]')],
-            "postprocess": (d) => d[0]..addAll([d[1]])
+            "symbols": [r"_$ebnf$1", RegExp(r"[\s]")],
+            "postprocess": (d) =>
+                removeDuplicateAndKeepUpdated(d[0]..addAll([d[1]]))
           },
           {
             "name": "_",
@@ -2342,13 +2743,13 @@ class MichelsonGrammar {
           },
           {
             "name": r"semicolons$ebnf$1",
-            "symbols": [new RegExp('[;]')],
+            "symbols": [RegExp("[;]")],
             "postprocess": id
           },
           {
             "name": r"semicolons$ebnf$1",
             "symbols": [],
-            "postprocess": (d) => null
+            "postprocess": (_) => null
           },
           {
             "name": "semicolons",
@@ -2357,8 +2758,4 @@ class MichelsonGrammar {
         ],
         'ParserStart': "main"
       };
-
-  arrpush(d) => d[0].addAll([d[1]]).toList();
-
-  joiner(d) => d.join('');
 }

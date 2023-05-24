@@ -1,0 +1,1 @@
+parameter (unit %default); storage (map address nat); code { CDR ; DUP ; NIL operation ; SWAP ; ITER { DUP ; DUG 2 ; CAR ; CONTRACT unit ; IF_NONE { PUSH int 35 ; FAILWITH } {} ; PUSH nat 100 ; AMOUNT ; DIG 4 ; CDR ; MUL ; EDIV ; IF_NONE { PUSH int 35 ; FAILWITH } {} ; CAR ; UNIT ; TRANSFER_TOKENS ; CONS } ; NIL operation ; SWAP ; ITER { CONS } ; PAIR }

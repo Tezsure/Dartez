@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"int","annots":["%store"]}]},{"prim":"storage","args":[{"prim":"int"}]},{"prim":"code","args":[[{"prim":"CAR"},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

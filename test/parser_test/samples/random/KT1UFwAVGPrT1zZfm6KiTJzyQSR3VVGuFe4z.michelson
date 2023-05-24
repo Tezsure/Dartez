@@ -1,0 +1,1 @@
+parameter (or (or (int %test_int) (map %test_map_nat nat string)) (or (map %test_map_of_map string (map string string)) (string %test_string))); storage int; code { UNPAIR ; IF_LEFT { IF_LEFT { SWAP ; DROP } { DROP } } { IF_LEFT { DROP } { DROP } } ; NIL operation ; PAIR }

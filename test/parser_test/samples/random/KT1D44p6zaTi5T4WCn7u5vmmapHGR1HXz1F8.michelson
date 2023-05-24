@@ -1,0 +1,1 @@
+parameter (pair %add_entry (string %a) (string %e)); storage (pair (list %authors string) (pair (list %dates timestamp) (list %entries string))); code { UNPAIR ; SWAP ; DUP ; GET 3 ; NOW ; CONS ; UPDATE 3 ; DUP ; GET 4 ; DUP 3 ; CDR ; CONS ; UPDATE 4 ; DUP ; CAR ; DIG 2 ; CAR ; CONS ; UPDATE 1 ; NIL operation ; PAIR }

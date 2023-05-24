@@ -1,0 +1,1 @@
+parameter (or (int %decrement) (int %increment)); storage int; code { DUP ; CDR ; SWAP ; CAR ; IF_LEFT { SWAP ; SUB } { ADD } ; NIL operation ; PAIR }

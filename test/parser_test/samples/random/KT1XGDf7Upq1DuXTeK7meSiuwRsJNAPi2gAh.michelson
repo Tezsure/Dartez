@@ -1,0 +1,1 @@
+parameter (address %setAdmin); storage (pair (address %_admin) (nat %_status)); code { UNPAIR ; SWAP ; DUP ; DUG 2 ; CAR ; SENDER ; COMPARE ; EQ ; IF {} { PUSH string "BUYING_UTILITY_NOT_ADMIN" ; FAILWITH } ; UPDATE 1 ; NIL operation ; PAIR }

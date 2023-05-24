@@ -1,0 +1,1 @@
+parameter unit; storage (big_map string bytes); code { CDR ; NIL operation ; PAIR }

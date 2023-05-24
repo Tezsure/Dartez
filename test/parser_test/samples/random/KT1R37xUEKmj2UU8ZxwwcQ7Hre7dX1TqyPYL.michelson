@@ -1,0 +1,1 @@
+parameter (or (bool %balance_of) (or (bool %transfer) (bool %update_operators))); storage nat; code { UNPAIR ; IF_LEFT { DROP } { IF_LEFT { DROP } { DROP } } ; NIL operation ; PAIR }

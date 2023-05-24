@@ -4,9 +4,15 @@ import 'package:convert/convert.dart';
 import 'package:dartez/chain/tezos/tezos_message_utils.dart';
 import 'package:dartez/helper/password_generater.dart';
 import 'package:dartez/utils/crypto_utils.dart';
-import 'package:sec/sec.dart';
+import 'package:secp256k1/secp256k1.dart' as secp256k1;
 
-enum SignerCurve { ED25519, SECP256K1, SECP256R1 }
+enum SignerCurve {
+  ED25519,
+  SECP256K1,
+
+  /// secp256k1 curve is only supported for reading the key not for signing an operation
+  SECP256R1,
+}
 
 class SoftSigner {
   var _secretKey;
@@ -40,10 +46,6 @@ class SoftSigner {
     if (validity >= 0) {
       var passphrase = PasswordGenerator.generatePassword(
         length: 32,
-        isWithLetters: true,
-        isWithNumbers: true,
-        isWithSpecial: true,
-        isWithUppercase: true,
       );
       var salt = CryptoUtils.generateSaltForPwHash();
       secretKey = CryptoUtils.encryptMessage(secretKey, passphrase, salt);
@@ -78,13 +80,14 @@ class SoftSigner {
 
   Uint8List signOperation(Uint8List uint8list) {
     if (signerCurve == SignerCurve.SECP256K1) {
-      var sig = EC.secp256k1.generateSignature(
-          BigInt.parse("0x" + hex.encode(getKey()!)),
-          TezosMessageUtils.simpleHash(uint8list, 32));
-      return Uint8List.fromList(hex.decode(
-          "${sig.r.toRadixString(16).padLeft(64, '0')}${sig.s.toRadixString(16).padLeft(64, '0')}"));
+      var key = secp256k1.PrivateKey.fromHex(hex.encode(getKey()!));
+      var sig = key
+          .signature(hex.encode(TezosMessageUtils.simpleHash(uint8list, 256)));
+      return Uint8List.fromList(hex.decode(sig.toRawHex()));
     }
-    return CryptoUtils.signDetached(TezosMessageUtils.simpleHash(uint8list, 32),
+
+    return CryptoUtils.signDetached(
+        TezosMessageUtils.simpleHash(uint8list, 256),
         Uint8List.fromList(getKey()!));
   }
 

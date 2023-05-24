@@ -1,4 +1,3 @@
-import 'package:dartez/michelson_parser/parser/micheline_grammar.dart';
 import 'package:dartez/michelson_parser/parser/michelson_grammar.dart';
 import 'package:dartez/michelson_parser/parser/nearley.dart';
 
@@ -9,13 +8,6 @@ class MichelsonParser {
     var cleanCode = preProcessMichelsonScript(code);
     cleanCode.map((_code) => parser.feed(_code)).toList();
     return parser.results[0];
-  }
-
-  static translateMichelineToHex(code) {
-    var parser = Nearley();
-    parser.parser(Nearley.fromCompiled(MichelineGrammar().grammar));
-    parser.feed(normalizeMichelineWhiteSpace(code));
-    return parser.results.join('');
   }
 
   static String normalizeMichelineWhiteSpace(String fragment) {

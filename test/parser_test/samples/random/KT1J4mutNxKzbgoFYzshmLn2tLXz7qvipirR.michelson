@@ -1,0 +1,1 @@
+parameter (pair %update_metadata (string %key) (bytes %value)); storage (pair (big_map %metadata string bytes) (string %name)); code { UNPAIR ; SWAP ; DUP ; CAR ; DUP 3 ; CDR ; SOME ; DIG 3 ; CAR ; UPDATE ; UPDATE 1 ; NIL operation ; PAIR }

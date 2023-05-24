@@ -1,0 +1,1 @@
+parameter (or (pair %add (int %x) (int %y)) (pair %multiply (int %x) (int %y))); storage int; code { CAR ; IF_LEFT { UNPAIR ; ADD } { UNPAIR ; MUL } ; NIL operation ; PAIR }

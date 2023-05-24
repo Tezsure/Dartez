@@ -1,0 +1,1 @@
+parameter (or (unit %default) (pair %update_stake (address %address) (nat %amount))); storage unit; code { UNPAIR ; IF_LEFT { DROP } { DROP } ; NIL operation ; PAIR }

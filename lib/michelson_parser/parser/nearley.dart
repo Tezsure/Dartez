@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:dartez/michelson_parser/grammar/michelson_grammar_tokenizer.dart';
+import 'package:dartez/michelson_parser/dartez_tokenizer/dartez_tokenizer.dart';
+import 'package:dartez/michelson_parser/parser/michelson_grammar.dart';
 
 var fail = {};
 
@@ -13,8 +14,8 @@ class Nearley {
   var lexerState;
   late List<Column?> table;
 
-  int? current;
-  late var results;
+  int current = 0;
+  late List<dynamic> results;
 
   static NearleyGrammar fromCompiled(Map<String, dynamic> rules, {start}) {
     var lexer = rules['Lexer'];
@@ -47,24 +48,115 @@ class Nearley {
     current = 0;
   }
 
-  feed(chunk) {
-    var lexer = this.lexer;
-    lexer.tokens = <GrammarResultModel>[];
-    lexer.numindex = 0;
-    lexer.reset(chunk);
-    var token = lexer.next();
+  /// Parse a single expression or script
+  /// if it's a script, parameter, storage, or code is required
+  /// if it's an expression, parameter, storage, or code is not allowed
+  void feedExpressionOrScript(String code, {bool isScript = false}) {
+    DartezTokenizer lexer = this.lexer;
+    List<Map<String, dynamic>> tokens = lexer.feed(code);
+
+    if (isScript) {
+      Map<String, List<dynamic>> tokenTypes = {
+        'parameter': [],
+        'storage': [],
+        'view': [],
+        'code': [],
+      };
+
+      for (var section in ["parameter", "storage", "code"]) {
+        if (tokens.indexWhere((token) => token['type'] == section) == -1) {
+          throw Exception('Invalid Michelson script - missing $section');
+        }
+      }
+
+      String currentType = tokenTypes.keys.first;
+
+      void addToTokenTypes(String type, token) {
+        if (currentType == 'view') {
+          tokenTypes[currentType]!.last.add(token);
+        } else {
+          tokenTypes[currentType]!.add(token);
+        }
+      }
+
+      for (var token in tokens) {
+        if (token['type'] == 'parameter' ||
+            token['type'] == 'storage' ||
+            token['type'] == 'code' ||
+            token['type'] == 'view') {
+          if (tokenTypes[token['type']]!.isEmpty) {
+            currentType = token['type'];
+          }
+          if (token['type'] == 'view') {
+            currentType = token['type'];
+            tokenTypes[currentType]!.add([]);
+          }
+        }
+        addToTokenTypes(currentType, token);
+      }
+
+      parser(
+        Nearley.fromCompiled(
+          MichelsonGrammar(viewCount: tokenTypes['view']!.length).grammar,
+        ),
+      );
+
+      for (var section in tokenTypes.keys.toList()) {
+        if (tokenTypes[section]!.isEmpty) continue;
+
+        if (section != 'view') {
+          this.lexer.buffer =
+              tokenTypes[section]!.map((e) => e['value']).join();
+          this.lexer.tokens = tokenTypes[section]!
+              .map<Map<String, dynamic>>((e) => e as Map<String, dynamic>)
+              .toList();
+          feed(tokenTypes[section]!
+              .map<Map<String, dynamic>>((e) => e as Map<String, dynamic>)
+              .toList());
+        } else {
+          for (var token in tokenTypes[section]!) {
+            this.lexer.buffer = token.map((e) => e['value']).join();
+            this.lexer.tokens = token
+                .map<Map<String, dynamic>>((e) => e as Map<String, dynamic>)
+                .toList();
+            feed(token
+                .map<Map<String, dynamic>>((e) => e as Map<String, dynamic>)
+                .toList());
+          }
+        }
+      }
+    } else {
+      // check if the first tokens is a parameter, storage, or code
+      // if it is, then throw an error
+      if (tokens[0]['type'] == 'parameter' ||
+          tokens[0]['type'] == 'storage' ||
+          tokens[0]['type'] == 'code' ||
+          tokens[0]['type'] == 'view') {
+        throw Exception('Invalid Michelson expression');
+      }
+      feed(tokens);
+    }
+  }
+
+  feed(List<Map<String, dynamic>> tokens) {
     var column;
-    while (token != null) {
-      column = table[current!];
 
-      if (current != 0) table[current! - 1] = null;
+    for (var token in tokens) {
+      column = table[current];
 
-      var n = current! + 1;
+      if (current != 0) table[current - 1] = null;
+
+      var n = current + 1;
       var nextColumn = new Column(grammar, n);
+      table.add(nextColumn);
 
       var literal = token['text'] != null ? token['text'] : token['value'];
       var value = lexer is StreamLexer ? token['value'] : token;
       var scannable = column.scannable;
+
+      // Keep track of the states we've already added to the new column
+      var addedStates = new Set();
+
       for (var w = scannable.length - 1; 0 <= w; w--) {
         var state = scannable[w];
         var expect = state.rule.symbols[state.dot];
@@ -80,12 +172,16 @@ class Nearley {
             'isToken': true,
             'reference': n - 1
           });
-          nextColumn.states.add(next);
+
+          // Only add the state to the new column if it hasn't already been added
+          if (!addedStates.contains(next)) {
+            addedStates.add(next);
+            nextColumn.states.add(next);
+          }
         }
       }
 
       nextColumn.process();
-      table.add(nextColumn);
 
       if (nextColumn.states.length == 0) {
         var err = new NearleyError(reportError(token));
@@ -94,12 +190,7 @@ class Nearley {
         throw Exception(err.error);
       }
 
-      token = lexer.next();
-      current = current! + 1;
-    }
-
-    if (column != null) {
-      this.lexerState = lexer.save();
+      current = current + 1;
     }
 
     results = this.finish();
@@ -323,6 +414,7 @@ class Column {
         var exp = state.rule.symbols[state.dot];
         if (!(exp is String)) {
           this.scannable.add(state);
+          continue;
         }
 
         if (_wants![exp] != null) {
@@ -369,7 +461,9 @@ class ColumnState {
       try {
         data = rule.postprocess(data);
       } catch (e) {
-        print("Error In ===> " + rule.name + "  " + rule.symbols.toString());
+        throw new Exception(
+          "Can't postprocess array: " + data.toString() + "\n" + e.toString(),
+        );
       }
     }
   }

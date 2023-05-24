@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"string","annots":["%set_db_access_hash"]}]},{"prim":"storage","args":[{"prim":"big_map","args":[{"prim":"address"},{"prim":"string"}]}]},{"prim":"code","args":[[{"prim":"UNPAIR"},{"prim":"SOME"},{"prim":"SENDER"},{"prim":"UPDATE"},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

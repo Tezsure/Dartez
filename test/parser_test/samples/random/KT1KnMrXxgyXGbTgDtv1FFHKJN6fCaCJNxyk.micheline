@@ -1,0 +1,1 @@
+[{"prim":"parameter","args":[{"prim":"unit"}]},{"prim":"storage","args":[{"prim":"list","args":[{"prim":"string"}]}]},{"prim":"code","args":[[{"prim":"CDR"},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}]

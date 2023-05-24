@@ -1,0 +1,1 @@
+parameter (list (pair (nat %token_id) (pair (string %symbol) (pair (string %name) (pair (nat %decimals) (map %extras string string)))))); storage (list (pair (nat %token_id) (pair (string %symbol) (pair (string %name) (pair (nat %decimals) (map %extras string string)))))); code { CAR ; NIL operation ; PAIR }

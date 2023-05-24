@@ -1,0 +1,1 @@
+parameter (bytes %mint); storage address; code { UNPAIR ; NIL operation ; DUP 3 ; CONTRACT %mint_OBJKT (pair (pair address nat) (pair bytes nat)) ; IF_NONE { PUSH int 9 ; FAILWITH } {} ; PUSH mutez 0 ; PUSH nat 100 ; DIG 4 ; PAIR ; PUSH nat 1 ; SELF_ADDRESS ; PAIR ; PAIR ; TRANSFER_TOKENS ; CONS ; PAIR }
