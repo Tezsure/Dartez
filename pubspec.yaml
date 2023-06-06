@@ -18,6 +18,7 @@ dependencies:
   crypto: ^3.0.0
   ed25519_hd_key: ^2.2.0
   sodium_libs: ^2.1.0+1
+  sodium: ^2.1.0
   http: ^0.13.4
   js: ^0.6.3
   secp256k1: ^0.3.0
