@@ -31,10 +31,10 @@ void main() {
     );
 
     expect(mnemonicKeys.secretKey,
-        "edskSBLCBjt14rsgFndZkgEKdd6NfjwxTthGQ9LG57dJTKLgesFQCFJnZArgXzeCWq7ym27tbeRjd2bZrYD5j8xT5tvUwFe7pz");
+        "edskRxjeWuNxTu47qAY4dUpSHaWMCYDppzo13xbv5qvj64QTNMASWPuRgQghEQSPBFSPr9G2GSCmXBzMYpPxSv5KKJoBYytqK3");
     expect(mnemonicKeys.publicKey,
-        "edpku8Qzrj5yrZG8DRnErchmu3bBG7WEUtoxSVeJBkg1FCLokdKQn5");
-    expect(mnemonicKeys.publicKeyHash, "tz1KrY4LhzqRQdngkhER6d3zvcjgsiXuAwCf");
+        "edpkvaP2nfa3w1QRMNxac1uZquK1x8eAMi5QCAL47PBibmU1zkCo8R");
+    expect(mnemonicKeys.publicKeyHash, "tz1MKE3ExnECuyAah8u9cSPWr522fzzjobGs");
 
     var path = "m/44'/1729'/0'";
 
@@ -43,10 +43,10 @@ void main() {
         signerCurve: SignerCurve.ED25519);
 
     expect(keysEd25519.secretKey,
-        "edskRdmPw766Dbj3oFYRuCcCn1Pbeuu9LaPRCUkNpE3TTFV25Ej2yHzvYqtAAFKcTmjT2fqEwJdbBzuCv24DH7qcXWHxVXXoQY");
+        "edskS9KHcddTS3AEfUvBTg9EsTWzwJoGvKnchyZYxNKZY8hWv6mm7FLENMCHNeL8bYJWgj6poWTCn3ugEhCUdZxZsegT3aknyt");
     expect(keysEd25519.publicKey,
-        "edpkuUxN5P4LfByoDJnzXRK3pGJaR5YsRMRJEnn2hPq4aCLZAUwLJn");
-    expect(keysEd25519.publicKeyHash, "tz1PjZrPEmWfTJpv3jZt2FsQpQa3t6XU2LrP");
+        "edpkuxZ5W8c2jmcaGuCFZxRDSWxS7hp98zcwj2YpUZkJWs5F7UMuF6");
+    expect(keysEd25519.publicKeyHash, "tz1ckrgqGGGBt4jGDmwFhtXc1LNpZJUnA9F2");
 
     var keysSecp256k1 = await Dartez.restoreIdentityFromDerivationPath(
         path, mnemonic,
@@ -96,8 +96,8 @@ void main() {
               )
             ])),
         [
-          "edsigtYKJjx9q7dU9GQKPdePhiWcQzp4SnxZtESFdi9GKeackEAjhCueuox4KPVBBuHtmhHZC32g81QYzEHmCEnbotK9pqehgym",
-          "31ba585fe3dd28dcdfd14453cfed9500f477709b679bfd4b079b658c020781566c0002298c03ed7d454a101eb7022bc95f7e5f41ac7800b266904e810201000002298c03ed7d454a101eb7022bc95f7e5f41ac780003e4bd5095f84541f478d88f777b15da89d7c27ed89622fa64da040ef5ae57b0a69b2d8ea5051b289f5893736077f3f3307f763c47577df0ba5b2e42b76c4800"
+          "edsigty1oXSTyVwRHAAXdYGLD7HWvUzLrEbbUKuQ2DTS8DWvjXGMkJWtjFkXXWzy9ni9nr7TicBJHRfgjTgS2gZrxaTvYENtqe6",
+          "31ba585fe3dd28dcdfd14453cfed9500f477709b679bfd4b079b658c020781566c0002298c03ed7d454a101eb7022bc95f7e5f41ac7800b366904e810201000002298c03ed7d454a101eb7022bc95f7e5f41ac7800c0ad3a341cc8670e8844035fa50fa6df01e61113b20b766a3c6bbb728f7ee6efb285b7b74eed5d4ec49d4dc125a544069d2c4856017f551b15d4c2f8f6ca1305"
         ]);
   });
 }
