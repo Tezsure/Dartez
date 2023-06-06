@@ -1,3 +1,6 @@
+# [2.0.1]
+
+- Tz1 address generation bug fixed
 # [2.0.0]
 
 - Conducted comprehensive security and performance audit for the package, addressing identified vulnerabilities, improving code quality, and optimising performance.

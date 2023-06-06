@@ -56,9 +56,9 @@ class SodiumUtilsImpl extends base.SodiumUtilsBase {
       return cryptoSignSeedKeypair(sk);
     }
 
-    var seed = sodium!.crypto.sign.skToPk(SecureKey.fromList(sodium!, sk));
+    var seed = sodium!.crypto.sign.skToSeed(SecureKey.fromList(sodium!, sk));
     var temp =
-        sodium!.crypto.sign.seedKeyPair(SecureKey.fromList(sodium!, seed));
+        sodium!.crypto.sign.seedKeyPair(SecureKey.fromList(sodium!, seed.extractBytes()));
     return base.KeyPair(temp.publicKey, temp.secretKey.extractBytes());
   }
 
