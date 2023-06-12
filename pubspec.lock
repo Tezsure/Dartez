@@ -457,10 +457,10 @@ packages:
     dependency: "direct main"
     description:
       name: sodium
-      sha256: "79fef0408c40c675de45f50e95ed0c7ee3393b7abda0771807691620bb47f5c7"
+      sha256: "575916e4d579b7885174f2ba4ab6d7d30617d2248f346d220c9f1786c83d5ef6"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "2.1.1"
   sodium_libs:
     dependency: "direct main"
     description:
