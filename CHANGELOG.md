@@ -1,3 +1,6 @@
+# [2.0.2]
+- Originate new contract fee estimation issue fixed
+
 # [2.0.1]
 
 - Tz1 address generation bug fixed

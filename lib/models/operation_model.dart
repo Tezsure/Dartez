@@ -55,7 +55,7 @@ class OperationModel {
               'public_key': publicKey
             }
           : kind == "origination"
-              ? delegate == null
+              ? delegate == null || delegate == ""
                   ? {
                       'kind': 'origination',
                       'source': source,
