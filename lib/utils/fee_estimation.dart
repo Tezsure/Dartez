@@ -36,6 +36,7 @@ class FeeEstimation {
     var gas = 0;
     var storageCost = 0;
     var staticFee = 0;
+    var gasStorageList = [];
     for (var ele in opResults['contents']) {
       try {
         gas += (int.parse(ele['metadata']['operation_result']
@@ -60,8 +61,12 @@ class FeeEstimation {
         throw "Error while estimating operation: $e";
       }
 
+      gas += TezosConstants.GasLimitPadding;
+      storageCost += TezosConstants.StorageLimitPadding;
+
       var internalOperations = ele['metadata']['internal_operation_results'];
       if (internalOperations == null) {
+        gasStorageList.add({'gas': gas, 'storageCost': storageCost});
         continue;
       }
 
@@ -74,12 +79,14 @@ class FeeEstimation {
           storageCost += TezosConstants.EmptyAccountStorageBurn;
         }
       }
+      gasStorageList.add({'gas': gas, 'storageCost': storageCost});
     }
 
     var validBranch = 'BMLxA4tQjiu1PT2x3dMiijgvMTQo8AVxkPBPpdtM8hCfiyiC1jz';
     var forgedOperationGroup =
         await TezosNodeWriter.forgeOperations(server, validBranch, operations);
     var operationSize = forgedOperationGroup.length / 2 + 64;
+
     var estimatedFee = staticFee +
         (gas / 10).ceil() +
         TezosConstants.BaseOperationFee +
@@ -92,7 +99,8 @@ class FeeEstimation {
       'gas': gas,
       'storageCost': storageCost,
       'estimatedFee': estimatedFee.toInt(),
-      'estimatedStorageBurn': estimatedStorageBurn
+      'estimatedStorageBurn': estimatedStorageBurn,
+      'gasStorageList': gasStorageList,
     };
   }
 

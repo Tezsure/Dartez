@@ -260,12 +260,20 @@ class TezosNodeWriter {
       operations[0].storageLimit = TezosConstants.DefaultKeyRevealStorageLimit;
 
       operations[1].fee = estimate['estimatedFee'].toString();
-      operations[1].gasLimit = estimate['gas'];
-      operations[1].storageLimit = estimate['storageCost'];
+
+      for (var i = 1; i < operations.length; i++) {
+        operations[i].gasLimit = estimate['gasStorageList'][i]['gas'];
+        operations[i].storageLimit =
+            estimate['gasStorageList'][i]['storageCost'];
+      }
     } else {
       operations[0].fee = estimate['estimatedFee'].toString();
-      operations[0].gasLimit = estimate['gas'];
-      operations[0].storageLimit = estimate['storageCost'];
+
+      for (var i = 0; i < operations.length; i++) {
+        operations[i].gasLimit = estimate['gasStorageList'][i]['gas'];
+        operations[i].storageLimit =
+            estimate['gasStorageList'][i]['storageCost'];
+      }
     }
 
     return operations;
