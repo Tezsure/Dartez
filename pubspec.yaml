@@ -24,6 +24,7 @@ dependencies:
   secp256k1: ^0.3.0
   unorm_dart: ^0.2.0
   bip32: ^2.0.0
+  sec: ^1.1.0
 
 dev_dependencies:
   flutter_test:
