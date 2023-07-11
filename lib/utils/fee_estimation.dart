@@ -38,13 +38,15 @@ class FeeEstimation {
     var staticFee = 0;
     var gasStorageList = [];
     for (var ele in opResults['contents']) {
+      gas = 0;
+      storageCost = 0;
       try {
-        gas += (int.parse(ele['metadata']['operation_result']
+        gas = (int.parse(ele['metadata']['operation_result']
                         ['consumed_milligas']
                     .toString()) ~/
                 1000) +
             GAS_BUFFER;
-        storageCost += int.parse((ele['metadata']['operation_result']
+        storageCost = int.parse((ele['metadata']['operation_result']
                     ['paid_storage_size_diff'] ??
                 '0')
             .toString());
@@ -81,6 +83,14 @@ class FeeEstimation {
       }
       gasStorageList.add({'gas': gas, 'storageCost': storageCost});
     }
+
+    gas = gasStorageList
+        .map((e) => e['gas'])
+        .reduce((value, element) => value + element);
+
+    storageCost = gasStorageList
+        .map((e) => e['storageCost'])
+        .reduce((value, element) => value + element);
 
     var validBranch = 'BMLxA4tQjiu1PT2x3dMiijgvMTQo8AVxkPBPpdtM8hCfiyiC1jz';
     var forgedOperationGroup =
