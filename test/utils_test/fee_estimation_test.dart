@@ -26,7 +26,7 @@ void main() {
       var result = await feeEstimation.estimateFees();
 
       expect(result['gas'] > 0, true);
-      expect(result['storageCost'] == 0, true);
+      expect(result['storageCost'] > 0, true);
       expect(result['estimatedFee'] > 0, true);
     });
   });

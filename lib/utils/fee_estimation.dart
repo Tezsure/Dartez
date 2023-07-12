@@ -36,14 +36,17 @@ class FeeEstimation {
     var gas = 0;
     var storageCost = 0;
     var staticFee = 0;
+    var gasStorageList = [];
     for (var ele in opResults['contents']) {
+      gas = 0;
+      storageCost = 0;
       try {
-        gas += (int.parse(ele['metadata']['operation_result']
+        gas = (int.parse(ele['metadata']['operation_result']
                         ['consumed_milligas']
                     .toString()) ~/
                 1000) +
             GAS_BUFFER;
-        storageCost += int.parse((ele['metadata']['operation_result']
+        storageCost = int.parse((ele['metadata']['operation_result']
                     ['paid_storage_size_diff'] ??
                 '0')
             .toString());
@@ -60,8 +63,12 @@ class FeeEstimation {
         throw "Error while estimating operation: $e";
       }
 
+      gas += TezosConstants.GasLimitPadding;
+      storageCost += TezosConstants.StorageLimitPadding;
+
       var internalOperations = ele['metadata']['internal_operation_results'];
       if (internalOperations == null) {
+        gasStorageList.add({'gas': gas, 'storageCost': storageCost});
         continue;
       }
 
@@ -74,12 +81,22 @@ class FeeEstimation {
           storageCost += TezosConstants.EmptyAccountStorageBurn;
         }
       }
+      gasStorageList.add({'gas': gas, 'storageCost': storageCost});
     }
+
+    gas = gasStorageList
+        .map((e) => e['gas'])
+        .reduce((value, element) => value + element);
+
+    storageCost = gasStorageList
+        .map((e) => e['storageCost'])
+        .reduce((value, element) => value + element);
 
     var validBranch = 'BMLxA4tQjiu1PT2x3dMiijgvMTQo8AVxkPBPpdtM8hCfiyiC1jz';
     var forgedOperationGroup =
         await TezosNodeWriter.forgeOperations(server, validBranch, operations);
     var operationSize = forgedOperationGroup.length / 2 + 64;
+
     var estimatedFee = staticFee +
         (gas / 10).ceil() +
         TezosConstants.BaseOperationFee +
@@ -92,7 +109,8 @@ class FeeEstimation {
       'gas': gas,
       'storageCost': storageCost,
       'estimatedFee': estimatedFee.toInt(),
-      'estimatedStorageBurn': estimatedStorageBurn
+      'estimatedStorageBurn': estimatedStorageBurn,
+      'gasStorageList': gasStorageList,
     };
   }
 

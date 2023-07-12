@@ -1,6 +1,6 @@
 name: dartez
 description: A flutter package which provides the functionalities to play around with tezos dApps
-version: 2.0.2
+version: 2.0.3
 homepage: https://github.com/Tezsure/Dartez
 repository: https://github.com/Tezsure/Dartez
 issue_tracker: https://github.com/Tezsure/Dartez/issues
@@ -24,6 +24,7 @@ dependencies:
   secp256k1: ^0.3.0
   unorm_dart: ^0.2.0
   bip32: ^2.0.0
+  sec: ^1.1.0
 
 dev_dependencies:
   flutter_test:

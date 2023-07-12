@@ -225,7 +225,7 @@ class TezosNodeWriter {
         : isKeyRevealed;
     var counter = accountOperationIndex + 1;
     for (var i = 0; i < operations.length; i++) {
-      operations[i].fee = '1500'; // default gas fee
+      operations[i].fee = '0';
     }
     if (!isKeyRevealed) {
       var revealOp = OperationModel(
@@ -253,9 +253,28 @@ class TezosNodeWriter {
       String server, List<OperationModel> operations) async {
     var feeEstimation = FeeEstimation(server, operations);
     var estimate = await feeEstimation.estimateFees();
-    operations[0].fee = estimate['estimatedFee'].toString();
-    operations[0].gasLimit = estimate['gas'];
-    operations[0].storageLimit = estimate['storageCost'];
+    if (operations[0].kind == 'reveal') {
+      operations[0].fee = '1500';
+      operations[0].gasLimit = TezosConstants.DefaultKeyRevealGasLimit;
+      operations[0].storageLimit = TezosConstants.DefaultKeyRevealStorageLimit;
+
+      operations[1].fee = estimate['estimatedFee'].toString();
+
+      for (var i = 1; i < operations.length; i++) {
+        operations[i].gasLimit = estimate['gasStorageList'][i]['gas'];
+        operations[i].storageLimit =
+            estimate['gasStorageList'][i]['storageCost'];
+      }
+    } else {
+      operations[0].fee = estimate['estimatedFee'].toString();
+
+      for (var i = 0; i < operations.length; i++) {
+        operations[i].gasLimit = estimate['gasStorageList'][i]['gas'];
+        operations[i].storageLimit =
+            estimate['gasStorageList'][i]['storageCost'];
+      }
+    }
+
     return operations;
   }
 
