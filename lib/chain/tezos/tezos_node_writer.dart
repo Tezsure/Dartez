@@ -225,7 +225,7 @@ class TezosNodeWriter {
         : isKeyRevealed;
     var counter = accountOperationIndex + 1;
     for (var i = 0; i < operations.length; i++) {
-      operations[i].fee = '0'; // default gas fee //TODO
+      operations[i].fee = '0';
     }
     if (!isKeyRevealed) {
       var revealOp = OperationModel(
@@ -253,7 +253,6 @@ class TezosNodeWriter {
       String server, List<OperationModel> operations) async {
     var feeEstimation = FeeEstimation(server, operations);
     var estimate = await feeEstimation.estimateFees();
-    //TODO:
     if (operations[0].kind == 'reveal') {
       operations[0].fee = '1500';
       operations[0].gasLimit = TezosConstants.DefaultKeyRevealGasLimit;

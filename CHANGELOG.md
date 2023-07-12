@@ -1,3 +1,7 @@
+# [2.0.3]
+- Fee estimation bugs fixed
+- Tz2 operation signing bug fixed
+
 # [2.0.2]
 - Originate new contract fee estimation issue fixed
 
